@@ -54,10 +54,27 @@ class SQLTest(toga.App):
             print(f"Failed to connect to sqlite db with error")
         cur = con.cursor()
         res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
-        #res = cur.execute("SELECT name FROM sqlite_schema WHERE type ='table' AND name NOT LIKE 'sqlite_%'")
 
+        left_container = self.build_desktop_account_list(res)
+        cur.close()
+
+
+        trans_cur = con.cursor()
+        trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+
+        right_container = self.build_desktop_transaction_list(trans_res)
+
+        split = toga.SplitContainer(content=[left_container, right_container])
+
+        self.main_window = toga.MainWindow(title=self.formal_name)
+        self.main_window.content = split
+        self.main_window.show()
+
+
+    def build_desktop_account_list(self, accounts_res):
         rows = []
-        for row in res.fetchall():
+        for row in accounts_res.fetchall():
             data = {
                 "subtitle": row[1],
             }
@@ -71,17 +88,11 @@ class SQLTest(toga.App):
             style=Pack(flex=1),
         )
         left_container.add(table)
-        cur.close()
-
-
-        trans_cur = con.cursor()
-        trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
-        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-        # doller = locale.currency(amount, grouping=True)
-
-
+        return left_container
+    
+    def build_desktop_transaction_list(self, transactions_res):
         trans_rows = []
-        for trans_row in trans_res.fetchall():
+        for trans_row in transactions_res.fetchall():
             trans_data = {
                 "title": trans_row[4],
                 "subtitle": locale.currency(trans_row[1], grouping=True),
@@ -122,12 +133,8 @@ class SQLTest(toga.App):
         # )
         # right_container = toga.ScrollContainer()
         # right_container.content = right_content
-
-        split = toga.SplitContainer(content=[left_container, right_container])
-
-        self.main_window = toga.MainWindow(title=self.formal_name)
-        self.main_window.content = split
-        self.main_window.show()
+        return right_container
+    
 
     def create_empty_db(self, dest_path):
         print(f"Creating new sqlite file {dest_path}")

@@ -9,7 +9,7 @@ author = "Kenny Drobnack"
 author_email = "kennydrobnack@gmail.com"
 
 [tool.briefcase.app.sqltest]
-formal_name = "SQL Test"
+formal_name = "Cashflower"
 description = "My first application"
 long_description = """More details about the app should go here.
 """

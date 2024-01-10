@@ -43,34 +43,90 @@ class SQLTest(toga.App):
         #dest.write_bytes(response.read())
 
         # query db
-        con = None
+        self.con = None
         try:
-            con = sqlite3.connect(dest)
-            if con is None:
+            self.con = sqlite3.connect(dest)
+            if self.con is None:
                 print("FAILED TO CONNECT TO sqlite DB")
             else:
                 print("Successfully connected to sqlite DB")
         except:
             print(f"Failed to connect to sqlite db with error")
-        cur = con.cursor()
+
+        self.main_window = toga.MainWindow(title=self.formal_name)
+        cur = self.con.cursor()
         res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
 
         left_container = self.build_desktop_account_list(res)
         cur.close()
 
-
-        trans_cur = con.cursor()
+        trans_cur = self.con.cursor()
         trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-
         right_container = self.build_desktop_transaction_list(trans_res)
 
         split = toga.SplitContainer(content=[left_container, right_container])
 
-        self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = split
+
+        cmd1 = toga.Command(
+            self.show_add_account_window,
+            "Edit Accounts",
+            tooltip="Edit Accounts",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        cmd2 = toga.Command(
+            self.show_add_transaction_window,
+            "Add Transaction",
+            tooltip="Add New Transactions",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        cmd3 = toga.Command(
+            self.show_main_window,
+            "Main Window",
+            tooltip="Switch back to main window",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        self.main_window.toolbar.add(cmd1, cmd2, cmd3)
+
+        self.show_main_window
         self.main_window.show()
 
+
+    async def show_main_window(self):
+        print("Switching to main window")
+    
+
+    async def show_add_account_window(self, widget):
+        add_account_box = toga.Box(style=Pack(direction=COLUMN, padding=30))
+        account_label = toga.Label("Add an account", style=Pack(padding=50))
+        account_types = toga.Selection(
+            items=[
+                {"name": "Cash"},
+                {"name": "Checking"},
+                {"name": "Savings"},
+            ],
+            accessor="name",
+        )
+        add_account_box.add(account_label)
+        add_account_box.add(account_types)
+        self.main_window.content = add_account_box
+
+
+    async def show_add_transaction_window(self, widget):
+        add_transaction_box = toga.Box(style=Pack(direction=ROW))
+        transaction_label = toga.Label("Add a transaction")
+        add_transaction_box.add(transaction_label)
+        self.main_window.content = add_transaction_box
+
+
+    async def action2(self, widget):
+        if await self.main_window.question_dialog("Toga", "Is this cool or what?"):
+            self.main_window.info_dialog("Happiness", "I know, right! :-)")
+        else:
+            self.main_window.info_dialog(
+                "Shucks...", "Well aren't you a spoilsport... :-("
+            )
 
     def build_desktop_account_list(self, accounts_res):
         rows = []

@@ -98,9 +98,15 @@ class SQLTest(toga.App):
     
 
     async def show_add_account_window(self, widget):
-        add_account_box = toga.Box(style=Pack(direction=COLUMN, padding=30))
-        account_label = toga.Label("Add an account", style=Pack(padding=50))
-        account_types = toga.Selection(
+        add_account_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
+        add_account_box.add(toga.Label("Add Account:"))
+        account_name_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        account_name_box.add(toga.Label("Name:"))
+        self.account_name_input = toga.TextInput(placeholder="Account name")
+        account_name_box.add(self.account_name_input)
+        account_type_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        account_type_box.add(toga.Label("Account type:"))
+        self.account_type_selection = toga.Selection(
             items=[
                 {"name": "Cash"},
                 {"name": "Checking"},
@@ -108,9 +114,21 @@ class SQLTest(toga.App):
             ],
             accessor="name",
         )
-        add_account_box.add(account_label)
-        add_account_box.add(account_types)
+        account_type_box.add(self.account_type_selection)
+
+        add_account_box.add(account_name_box)
+        add_account_box.add(account_type_box)
+        add_account_button = toga.Button("Add Account", on_press=self.add_account_callback)
+        add_account_box.add(add_account_button)
         self.main_window.content = add_account_box
+
+
+    async def add_account_callback(self, widget):
+        trans_cur = self.con.cursor()
+        sql_statement = f"INSERT INTO accounts (name, type) values ('{self.account_name_input.value}', '{self.account_type_selection.value.name}')"
+        print(f"Running {sql_statement}")
+        trans_res = trans_cur.execute(sql_statement)
+        self.con.commit()
 
 
     async def show_add_transaction_window(self, widget):

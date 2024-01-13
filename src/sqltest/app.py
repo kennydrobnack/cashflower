@@ -82,19 +82,59 @@ class SQLTest(toga.App):
             icon=toga.Icon.DEFAULT_ICON,
         )
         cmd3 = toga.Command(
-            self.show_main_window,
+            self.switch_to_main_window,
             "Main Window",
             tooltip="Switch back to main window",
             icon=toga.Icon.DEFAULT_ICON,
         )
         self.main_window.toolbar.add(cmd1, cmd2, cmd3)
 
-        self.show_main_window
         self.main_window.show()
 
 
-    async def show_main_window(self):
+    async def switch_to_main_window(self, widget):
         print("Switching to main window")
+        self.show_main_window
+
+    
+    async def show_main_window(self):
+        print("Showing main window")
+        self.main_window = toga.MainWindow(title=self.formal_name)
+        cur = self.con.cursor()
+        res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
+
+        left_container = self.build_desktop_account_list(res)
+        cur.close()
+
+        trans_cur = self.con.cursor()
+        trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+        right_container = self.build_desktop_transaction_list(trans_res)
+
+        split = toga.SplitContainer(content=[left_container, right_container])
+
+        self.main_window.content = split
+
+        cmd1 = toga.Command(
+            self.show_add_account_window,
+            "Edit Accounts",
+            tooltip="Edit Accounts",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        cmd2 = toga.Command(
+            self.show_add_transaction_window,
+            "Add Transaction",
+            tooltip="Add New Transactions",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        cmd3 = toga.Command(
+            self.show_main_window,
+            "Main Window",
+            tooltip="Switch back to main window",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        self.main_window.toolbar.add(cmd1, cmd2, cmd3)
+        self.main_window.show()
     
 
     async def show_add_account_window(self, widget):
@@ -102,7 +142,7 @@ class SQLTest(toga.App):
         add_account_box.add(toga.Label("Add Account:"))
         account_name_box = toga.Box(style=Pack(direction=ROW, padding=5))
         account_name_box.add(toga.Label("Name:"))
-        self.account_name_input = toga.TextInput(placeholder="Account name")
+        self.account_name_input = toga.TextInput(placeholder="Account name", style=Pack(width=200))
         account_name_box.add(self.account_name_input)
         account_type_box = toga.Box(style=Pack(direction=ROW, padding=5))
         account_type_box.add(toga.Label("Account type:"))
@@ -118,16 +158,16 @@ class SQLTest(toga.App):
 
         add_account_box.add(account_name_box)
         add_account_box.add(account_type_box)
-        add_account_button = toga.Button("Add Account", on_press=self.add_account_callback)
+        add_account_button = toga.Button("Add Account", on_press=self.add_account_callback, style=Pack(width=200))
         add_account_box.add(add_account_button)
         self.main_window.content = add_account_box
 
 
-    async def add_account_callback(self, widget):
+    def add_account_callback(self, widget):
         trans_cur = self.con.cursor()
-        sql_statement = f"INSERT INTO accounts (name, type) values ('{self.account_name_input.value}', '{self.account_type_selection.value.name}')"
-        print(f"Running {sql_statement}")
-        trans_res = trans_cur.execute(sql_statement)
+        sql_statement = f"INSERT INTO accounts (name, type) values (?, ?)"
+        print(f"Running {sql_statement} with values {self.account_name_input.value} and {self.account_type_selection.value.name}")
+        trans_cur.execute(sql_statement, (self.account_name_input.value, self.account_type_selection.value.name))
         self.con.commit()
 
 

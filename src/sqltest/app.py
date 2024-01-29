@@ -171,11 +171,15 @@ class SQLTest(toga.App):
         self.con.commit()
 
 
-    async def show_add_transaction_window(self, widget):
-        add_transaction_box = toga.Box(style=Pack(direction=ROW))
-        transaction_label = toga.Label("Add a transaction")
-        add_transaction_box.add(transaction_label)
-        self.main_window.content = add_transaction_box
+    def show_add_transaction_window(self, widget):
+        transaction_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
+        transaction_box.add(toga.Label("Add Transaction:"))
+        transaction_date_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_date_box.add(toga.Label("Date:"))
+        self.transaction_date_input = toga.TextInput(placeholder="Date", style=Pack(width=200))
+        transaction_date_box.add(self.transaction_date_input)
+        transaction_box.add(transaction_date_box)
+        self.main_window.content = transaction_box
 
 
     async def action2(self, widget):

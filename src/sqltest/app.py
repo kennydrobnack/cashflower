@@ -61,7 +61,7 @@ class SQLTest(toga.App):
         cur.close()
 
         trans_cur = self.con.cursor()
-        trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
+        trans_res = trans_cur.execute("SELECT id, (amount/100) as amount , date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
         right_container = self.build_desktop_transaction_list(trans_res)
 
@@ -174,12 +174,65 @@ class SQLTest(toga.App):
     def show_add_transaction_window(self, widget):
         transaction_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         transaction_box.add(toga.Label("Add Transaction:"))
+        
         transaction_date_box = toga.Box(style=Pack(direction=ROW, padding=5))
         transaction_date_box.add(toga.Label("Date:"))
-        self.transaction_date_input = toga.TextInput(placeholder="Date", style=Pack(width=200))
+        self.transaction_date_input = toga.NumberInput(style=Pack(width=200))
         transaction_date_box.add(self.transaction_date_input)
-        transaction_box.add(transaction_date_box)
+
+        self.transaction_amount_input = toga.NumberInput(style=Pack(width=200))
+        transaction_amount_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_amount_box.add(toga.Label("Amount:"))
+        transaction_amount_box.add(self.transaction_amount_input)
+
+        self.transaction_payee_input = toga.TextInput(placeholder="Payee", style=Pack(width=200))
+        transaction_payee_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_payee_box.add(toga.Label("Payee:"))
+        transaction_payee_box.add(self.transaction_payee_input)
+
+        transaction_type_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_type_box.add(toga.Label("Payee:"))
+        self.transaction_type_selection = toga.Selection(
+            items=[
+                {"name": "Debit"},
+                {"name": "Credit"},
+                {"name": "Transfer"},
+            ],
+            accessor="name",
+        )
+        transaction_type_box.add(self.transaction_type_selection)
+
+        self.transaction_account_input = toga.NumberInput(style=Pack(width=200))
+        transaction_account_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_account_box.add(toga.Label("Account:"))
+        transaction_account_box.add(self.transaction_account_input)
+
+        self.transaction_merchant_input = toga.TextInput(placeholder="Merchant Name", style=Pack(width=200))
+        transaction_merchant_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_merchant_box.add(toga.Label("Merchant:"))
+        transaction_merchant_box.add(self.transaction_merchant_input)
+ #   category TEXT DEFAULT ('Uncategorized') NOT NULL,
+ #   sub_category TEXT DEFAULT ('None') NOT NULL);
+        
+        transaction_box.add(transaction_date_box,
+                            transaction_amount_box,
+                            transaction_payee_box,
+                            transaction_type_box,
+                            transaction_account_box,
+                            transaction_merchant_box)
+        
+        add_transaction_button = toga.Button("Add Transaction", on_press=self.add_transaction_callback, style=Pack(width=200))
+        transaction_box.add(add_transaction_button)
         self.main_window.content = transaction_box
+
+    
+    def add_transaction_callback(self, widget):
+        print("Adding transaction:")
+        trans_cur = self.con.cursor()
+        sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant) values (?, ?, ?, ?)"
+        print(f"Running {sql_statement} with values {int(self.transaction_date_input.value)} and {int(self.transaction_amount_input.value)}")
+        trans_cur.execute(sql_statement, (int(self.transaction_date_input.value), int(self.transaction_amount_input.value), int(self.transaction_account_input.value), self.transaction_merchant_input.value))
+        self.con.commit()
 
 
     async def action2(self, widget):
@@ -269,10 +322,13 @@ CREATE TABLE accounts (
         cur.execute('''
 CREATE TABLE transactions (
 	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	amount NUMERIC NOT NULL,
-	date NUMERIC NOT NULL,
-	"type" text DEFAULT ('debit') NOT NULL
-, account_id INTEGER NOT NULL, merchant TEXT, category TEXT DEFAULT ('Uncategorized') NOT NULL, sub_category TEXT DEFAULT ('None') NOT NULL);
+	amount INTEGER NOT NULL,
+	date INTEGER NOT NULL,
+	"type" text DEFAULT ('debit') NOT NULL,
+    account_id INTEGER NOT NULL,
+    merchant TEXT,
+    category TEXT DEFAULT ('Uncategorized') NOT NULL,
+    sub_category TEXT DEFAULT ('None') NOT NULL);
                           ''')
         cur.execute('''
 INSERT INTO accounts (id,name,"type") VALUES
@@ -281,8 +337,8 @@ INSERT INTO accounts (id,name,"type") VALUES
                     ''')
         cur.execute('''
 INSERT INTO transactions (amount,date,"type",account_id,merchant,category,sub_category) VALUES
-	 (100.00,'2024-01-01','Credit',1,'Starting Balance','System Category','Starting Balance'),
-	 (500.00,'2024-01-01','Credit',2,'Starting Balance','System Category','Starting Balance');
+	 (10000,'2024-01-01','Credit',1,'Starting Balance','System Category','Starting Balance'),
+	 (50000,'2024-01-01','Credit',2,'Starting Balance','System Category','Starting Balance');
                     ''')
         new_connection.commit()
         print(f"Successfully created sqlite file {dest_path}")

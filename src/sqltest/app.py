@@ -15,7 +15,7 @@ import urllib.request
 
 
 class SQLTest(toga.App):
-    def startup(self):
+    async def startup(self):
         """
         Construct and show the Toga application.
 
@@ -54,18 +54,15 @@ class SQLTest(toga.App):
             print(f"Failed to connect to sqlite db with error")
 
         self.main_window = toga.MainWindow(title=self.formal_name)
-        cur = self.con.cursor()
-        res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
 
-        left_container = self.build_desktop_account_list(res)
-        cur.close()
+        self.account_list_container = await self.build_desktop_account_list
 
         trans_cur = self.con.cursor()
         trans_res = trans_cur.execute("SELECT id, (amount/100) as amount , date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-        right_container = self.build_desktop_transaction_list(trans_res)
+        self.build_desktop_transaction_list(trans_res)
 
-        split = toga.SplitContainer(content=[left_container, right_container])
+        split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
 
         self.main_window.content = split
 
@@ -100,18 +97,15 @@ class SQLTest(toga.App):
     async def show_main_window(self):
         print("Showing main window")
         self.main_window = toga.MainWindow(title=self.formal_name)
-        cur = self.con.cursor()
-        res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
 
-        left_container = self.build_desktop_account_list(res)
-        cur.close()
+        await self.build_desktop_account_list()
 
         trans_cur = self.con.cursor()
         trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-        right_container = self.build_desktop_transaction_list(trans_res)
+        self.transaction_container = self.build_desktop_transaction_list(trans_res)
 
-        split = toga.SplitContainer(content=[left_container, right_container])
+        split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
 
         self.main_window.content = split
 
@@ -163,12 +157,19 @@ class SQLTest(toga.App):
         self.main_window.content = add_account_box
 
 
-    def add_account_callback(self, widget):
+    async def add_account_to_db(self):
         trans_cur = self.con.cursor()
         sql_statement = f"INSERT INTO accounts (name, type) values (?, ?)"
         print(f"Running {sql_statement} with values {self.account_name_input.value} and {self.account_type_selection.value.name}")
         trans_cur.execute(sql_statement, (self.account_name_input.value, self.account_type_selection.value.name))
         self.con.commit()
+
+    async def add_account_callback(self, widget):
+        await self.add_account_to_db()
+        await self.build_desktop_account_list()
+        split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
+
+        self.main_window.content = split
 
 
     def show_add_transaction_window(self, widget):
@@ -243,13 +244,16 @@ class SQLTest(toga.App):
                 "Shucks...", "Well aren't you a spoilsport... :-("
             )
 
-    def build_desktop_account_list(self, accounts_res):
+    async def build_desktop_account_list(self):
+        cur = self.con.cursor()
+        res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
         rows = []
         for row in accounts_res.fetchall():
             data = {
                 "subtitle": row[1],
             }
             rows.append(data)
+        cur.close()
 
         # display table
         left_container = toga.Box()
@@ -259,7 +263,9 @@ class SQLTest(toga.App):
             style=Pack(flex=1),
         )
         left_container.add(table)
-        return left_container
+        self.account_list_container = left_container
+        
+        
     
     def build_desktop_transaction_list(self, transactions_res):
         trans_rows = []

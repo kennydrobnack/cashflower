@@ -95,16 +95,16 @@ class SQLTest(toga.App):
         self.show_main_window()
 
 
-    async def switch_to_main_window(self, widget):
+    def switch_to_main_window(self, widget):
         print("Switching to main window")
-        self.show_main_window
+        self.show_main_window()
 
     
-    async def show_main_window(self):
+    def show_main_window(self):
         print("Showing main window")
         self.main_window = toga.MainWindow(title=self.formal_name)
 
-        await self.build_desktop_account_list()
+        self.build_desktop_account_list()
 
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
         self.transaction_container = self.build_desktop_transaction_list()
@@ -126,16 +126,16 @@ class SQLTest(toga.App):
             icon=toga.Icon.DEFAULT_ICON,
         )
         cmd3 = toga.Command(
-            self.show_main_window,
+            self.switch_to_main_window,
             "Main Window",
             tooltip="Switch back to main window",
             icon=toga.Icon.DEFAULT_ICON,
         )
         self.main_window.toolbar.add(cmd1, cmd2, cmd3)
         self.main_window.show()
-    
 
-    async def show_add_account_window(self, widget):
+
+    def show_add_account_window(self, widget):
         add_account_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         add_account_box.add(toga.Label("Add Account:"))
         account_name_box = toga.Box(style=Pack(direction=ROW, padding=5))
@@ -161,16 +161,16 @@ class SQLTest(toga.App):
         self.main_window.content = add_account_box
 
 
-    async def add_account_to_db(self, account_name, account_type):
+    def add_account_to_db(self, account_name, account_type):
         account_cur = self.con.cursor()
         sql_statement = f"INSERT INTO accounts (name, type) values (?, ?)"
         print(f"Running {sql_statement} with values {self.account_name_input.value} and {self.account_type_selection.value.name}")
         account_cur.execute(sql_statement, (self.account_name_input.value, self.account_type_selection.value.name))
         self.con.commit()
 
-    async def add_account_callback(self, widget):
-        await self.add_account_to_db()
-        await self.build_desktop_account_list()
+    def add_account_callback(self, widget):
+        self.add_account_to_db()
+        self.build_desktop_account_list()
         split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
 
         self.main_window.content = split
@@ -240,15 +240,15 @@ class SQLTest(toga.App):
         self.con.commit()
 
 
-    async def action2(self, widget):
-        if await self.main_window.question_dialog("Toga", "Is this cool or what?"):
+    def action2(self, widget):
+        if self.main_window.question_dialog("Toga", "Is this cool or what?"):
             self.main_window.info_dialog("Happiness", "I know, right! :-)")
         else:
             self.main_window.info_dialog(
                 "Shucks...", "Well aren't you a spoilsport... :-("
             )
 
-    async def build_desktop_account_list(self):
+    def build_desktop_account_list(self):
         cur = self.con.cursor()
         accounts_res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
         rows = []

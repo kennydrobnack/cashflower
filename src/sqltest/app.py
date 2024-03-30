@@ -15,7 +15,7 @@ import urllib.request
 
 
 class SQLTest(toga.App):
-    async def startup(self):
+    def startup(self):
         """
         Construct and show the Toga application.
 
@@ -53,18 +53,18 @@ class SQLTest(toga.App):
         except:
             print(f"Failed to connect to sqlite db with error")
 
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
         self.main_window = toga.MainWindow(title=self.formal_name)
 
-        self.account_list_container = await self.build_desktop_account_list
+        account_list_container = toga.Box()
+        account_loading_label = toga.Label("Loading Account List...")
+        account_list_container.add(account_loading_label)
+        self.account_list_container = account_list_container
 
-        trans_cur = self.con.cursor()
-        trans_res = trans_cur.execute("SELECT id, (amount/100) as amount , date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
-        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-        self.build_desktop_transaction_list(trans_res)
-
-        split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
-
-        self.main_window.content = split
+        transaction_container = toga.Box()
+        transaction_loading_label = toga.Label("Loading Transaction List...")
+        transaction_container.add(transaction_loading_label)
+        self.transaction_container = transaction_container
 
         cmd1 = toga.Command(
             self.show_add_account_window,
@@ -85,8 +85,14 @@ class SQLTest(toga.App):
             icon=toga.Icon.DEFAULT_ICON,
         )
         self.main_window.toolbar.add(cmd1, cmd2, cmd3)
+        self.build_desktop_account_list()
+        self.build_desktop_transaction_list()
 
+        split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
+
+        self.main_window.content = split
         self.main_window.show()
+        self.show_main_window()
 
 
     async def switch_to_main_window(self, widget):
@@ -100,10 +106,8 @@ class SQLTest(toga.App):
 
         await self.build_desktop_account_list()
 
-        trans_cur = self.con.cursor()
-        trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-        self.transaction_container = self.build_desktop_transaction_list(trans_res)
+        self.transaction_container = self.build_desktop_transaction_list()
 
         split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
 
@@ -157,11 +161,11 @@ class SQLTest(toga.App):
         self.main_window.content = add_account_box
 
 
-    async def add_account_to_db(self):
-        trans_cur = self.con.cursor()
+    async def add_account_to_db(self, account_name, account_type):
+        account_cur = self.con.cursor()
         sql_statement = f"INSERT INTO accounts (name, type) values (?, ?)"
         print(f"Running {sql_statement} with values {self.account_name_input.value} and {self.account_type_selection.value.name}")
-        trans_cur.execute(sql_statement, (self.account_name_input.value, self.account_type_selection.value.name))
+        account_cur.execute(sql_statement, (self.account_name_input.value, self.account_type_selection.value.name))
         self.con.commit()
 
     async def add_account_callback(self, widget):
@@ -246,7 +250,7 @@ class SQLTest(toga.App):
 
     async def build_desktop_account_list(self):
         cur = self.con.cursor()
-        res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
+        accounts_res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
         rows = []
         for row in accounts_res.fetchall():
             data = {
@@ -267,9 +271,11 @@ class SQLTest(toga.App):
         
         
     
-    def build_desktop_transaction_list(self, transactions_res):
+    def build_desktop_transaction_list(self):
+        trans_cur = self.con.cursor()
+        trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
         trans_rows = []
-        for trans_row in transactions_res.fetchall():
+        for trans_row in trans_res.fetchall():
             trans_data = {
                 "title": trans_row[4],
                 "subtitle": locale.currency(trans_row[1], grouping=True),
@@ -286,6 +292,7 @@ class SQLTest(toga.App):
             trans_rows.append(trans_data)
 
         print(f"Transactions rows: {trans_rows}")
+        trans_cur.close()
 
         right_container = toga.ScrollContainer()
         transactions_list = toga.DetailedList(

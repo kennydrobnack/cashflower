@@ -2,6 +2,8 @@
 My first application
 """
 import os
+import time
+import datetime
 from pathlib import Path, PurePath
 from tempfile import mkdtemp
 
@@ -182,7 +184,7 @@ class SQLTest(toga.App):
         
         transaction_date_box = toga.Box(style=Pack(direction=ROW, padding=5))
         transaction_date_box.add(toga.Label("Date:"))
-        self.transaction_date_input = toga.NumberInput(style=Pack(width=200))
+        self.transaction_date_input = toga.TextInput(style=Pack(width=200))
         transaction_date_box.add(self.transaction_date_input)
 
         self.transaction_amount_input = toga.NumberInput(style=Pack(width=200))
@@ -235,8 +237,12 @@ class SQLTest(toga.App):
         print("Adding transaction:")
         trans_cur = self.con.cursor()
         sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant) values (?, ?, ?, ?)"
-        print(f"Running {sql_statement} with values {int(self.transaction_date_input.value)} and {int(self.transaction_amount_input.value)}")
-        trans_cur.execute(sql_statement, (int(self.transaction_date_input.value), int(self.transaction_amount_input.value), int(self.transaction_account_input.value), self.transaction_merchant_input.value))
+
+        transaction_timestamp = time.mktime(datetime.datetime.strptime(self.transaction_date_input.value,
+                                            "%m/%d/%Y").timetuple())
+
+        print(f"Running {sql_statement} with values {transaction_timestamp} and {int(self.transaction_amount_input.value)}")
+        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_input.value), self.transaction_merchant_input.value))
         self.con.commit()
 
 

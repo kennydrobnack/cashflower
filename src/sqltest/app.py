@@ -181,7 +181,8 @@ class SQLTest(toga.App):
     def show_add_transaction_window(self, widget):
         transaction_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         transaction_box.add(toga.Label("Add Transaction:"))
-        
+
+
         transaction_date_box = toga.Box(style=Pack(direction=ROW, padding=5))
         transaction_date_box.add(toga.Label("Date:"))
         self.transaction_date_input = toga.TextInput(style=Pack(width=200))
@@ -192,13 +193,13 @@ class SQLTest(toga.App):
         transaction_amount_box.add(toga.Label("Amount:"))
         transaction_amount_box.add(self.transaction_amount_input)
 
-        self.transaction_payee_input = toga.TextInput(placeholder="Payee", style=Pack(width=200))
-        transaction_payee_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_payee_box.add(toga.Label("Payee:"))
-        transaction_payee_box.add(self.transaction_payee_input)
+        self.transaction_merchant_input = toga.TextInput(placeholder="Merchant", style=Pack(width=200))
+        transaction_merchant_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_merchant_box.add(toga.Label("Merchant:"))
+        transaction_merchant_box.add(self.transaction_merchant_input)
 
         transaction_type_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_type_box.add(toga.Label("Payee:"))
+        transaction_type_box.add(toga.Label("Type:"))
         self.transaction_type_selection = toga.Selection(
             items=[
                 {"name": "Debit"},
@@ -218,15 +219,25 @@ class SQLTest(toga.App):
         transaction_merchant_box = toga.Box(style=Pack(direction=ROW, padding=5))
         transaction_merchant_box.add(toga.Label("Merchant:"))
         transaction_merchant_box.add(self.transaction_merchant_input)
- #   category TEXT DEFAULT ('Uncategorized') NOT NULL,
- #   sub_category TEXT DEFAULT ('None') NOT NULL);
+
+        self.transaction_category_input = toga.TextInput(placeholder="Category", style=Pack(width=200))
+        transaction_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_category_box.add(toga.Label("Category:"))
+        transaction_category_box.add(self.transaction_category_input)
+
+        self.transaction_sub_category_input = toga.TextInput(placeholder="Sub-Category", style=Pack(width=200))
+        transaction_sub_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        transaction_sub_category_box.add(toga.Label("Sub-Category:"))
+        transaction_sub_category_box.add(self.transaction_sub_category_input)
         
         transaction_box.add(transaction_date_box,
                             transaction_amount_box,
-                            transaction_payee_box,
+                            transaction_merchant_box,
                             transaction_type_box,
                             transaction_account_box,
-                            transaction_merchant_box)
+                            transaction_merchant_box,
+                            transaction_category_box,
+                            transaction_sub_category_box)
         
         add_transaction_button = toga.Button("Add Transaction", on_press=self.add_transaction_callback, style=Pack(width=200))
         transaction_box.add(add_transaction_button)
@@ -236,13 +247,13 @@ class SQLTest(toga.App):
     def add_transaction_callback(self, widget):
         print("Adding transaction:")
         trans_cur = self.con.cursor()
-        sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant) values (?, ?, ?, ?)"
+        sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant, category, sub_category) values (?, ?, ?, ?, ?, ?)"
 
         transaction_timestamp = time.mktime(datetime.datetime.strptime(self.transaction_date_input.value,
                                             "%m/%d/%Y").timetuple())
 
         print(f"Running {sql_statement} with values {transaction_timestamp} and {int(self.transaction_amount_input.value)}")
-        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_input.value), self.transaction_merchant_input.value))
+        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_input.value), self.transaction_merchant_input.value, self.transaction_category_input.value, self.transaction_sub_category_input.value))
         self.con.commit()
 
 

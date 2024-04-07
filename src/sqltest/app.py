@@ -9,6 +9,7 @@ from tempfile import mkdtemp
 
 import locale
 import toga
+from toga.sources import ListSource
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 
@@ -210,27 +211,21 @@ class SQLTest(toga.App):
         )
         transaction_type_box.add(self.transaction_type_selection)
 
+        account_list_options = ListSource(
+            accessors=["name", "account_id"],
+            data = []
+        )
 
-        # rows = []
-        # self.accounts_list = accounts_res.fetchall()
-        # for row in self.accounts_list:
-        #     data = {
-        #         "subtitle": row[1],
-        #     }
-        #     rows.append(data)
-
-        items_account_list = []
         for row in self.accounts_list:
             data = {
-                "name":
-                row[0],
-                "account_id": row[1]
+                "name": row[1],
+                "account_id": row[0]
             }
-            items_account_list.append(data)
+            account_list_options.append(data)
 
         self.transaction_account_selection = toga.Selection(
-            items=items_account_list,
-            accessor="name",
+            items=account_list_options,
+            accessor="name"
         )
 
         transaction_account_box = toga.Box(style=Pack(direction=ROW, padding=5))

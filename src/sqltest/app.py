@@ -210,14 +210,29 @@ class SQLTest(toga.App):
         )
         transaction_type_box.add(self.transaction_type_selection)
 
+
+        # rows = []
+        # self.accounts_list = accounts_res.fetchall()
+        # for row in self.accounts_list:
+        #     data = {
+        #         "subtitle": row[1],
+        #     }
+        #     rows.append(data)
+
+        items_account_list = []
+        for row in self.accounts_list:
+            data = {
+                "name":
+                row[0],
+                "account_id": row[1]
+            }
+            items_account_list.append(data)
+
         self.transaction_account_selection = toga.Selection(
-            items=[
-                {"name": "Checking", "account_id": 1},
-                {"name": "Savings", "account_id": 2},
-                {"name": "Credit Card", "account_id": 3},
-            ],
+            items=items_account_list,
             accessor="name",
         )
+
         transaction_account_box = toga.Box(style=Pack(direction=ROW, padding=5))
         transaction_account_box.add(toga.Label("Account:"))
         transaction_account_box.add(self.transaction_account_selection)
@@ -276,7 +291,8 @@ class SQLTest(toga.App):
         cur = self.con.cursor()
         accounts_res = cur.execute("SELECT id, name FROM accounts ORDER BY Name")
         rows = []
-        for row in accounts_res.fetchall():
+        self.accounts_list = accounts_res.fetchall()
+        for row in self.accounts_list:
             data = {
                 "subtitle": row[1],
             }

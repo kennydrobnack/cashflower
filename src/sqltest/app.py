@@ -210,10 +210,17 @@ class SQLTest(toga.App):
         )
         transaction_type_box.add(self.transaction_type_selection)
 
-        self.transaction_account_input = toga.NumberInput(style=Pack(width=200))
+        self.transaction_account_selection = toga.Selection(
+            items=[
+                {"name": "Checking", "account_id": 1},
+                {"name": "Savings", "account_id": 2},
+                {"name": "Credit Card", "account_id": 3},
+            ],
+            accessor="name",
+        )
         transaction_account_box = toga.Box(style=Pack(direction=ROW, padding=5))
         transaction_account_box.add(toga.Label("Account:"))
-        transaction_account_box.add(self.transaction_account_input)
+        transaction_account_box.add(self.transaction_account_selection)
 
         self.transaction_merchant_input = toga.TextInput(placeholder="Merchant Name", style=Pack(width=200))
         transaction_merchant_box = toga.Box(style=Pack(direction=ROW, padding=5))
@@ -253,7 +260,7 @@ class SQLTest(toga.App):
                                             "%m/%d/%Y").timetuple())
 
         print(f"Running {sql_statement} with values {transaction_timestamp} and {int(self.transaction_amount_input.value)}")
-        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_input.value), self.transaction_merchant_input.value, self.transaction_category_input.value, self.transaction_sub_category_input.value))
+        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_category_input.value, self.transaction_sub_category_input.value))
         self.con.commit()
 
 

@@ -29,6 +29,9 @@ class SQLTest(toga.App):
         # download db
 
         data_dir = self.app.paths.data
+        if (not os.path.exists(data_dir)):
+            print(f"Data dir {data_dir} does not exist, creating...")
+            os.makedirs(data_dir)
 
         dest = Path(data_dir) / Path("budget")
 

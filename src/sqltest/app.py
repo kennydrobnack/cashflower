@@ -361,6 +361,16 @@ CREATE TABLE accounts (
 );
                     ''')
         cur.execute('''
+CREATE TABLE budget_categories(
+    budget_category_id INTEGER,
+    name TEXT);
+                    ''')
+        cur.execute('''
+CREATE TABLE spending_categories(
+    spending_category_id INTEGER,
+    name TEXT);
+                    ''')
+        cur.execute('''
 CREATE TABLE transactions (
 	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	amount INTEGER NOT NULL,
@@ -380,6 +390,16 @@ INSERT INTO accounts (id,name,"type") VALUES
 INSERT INTO transactions (amount,date,"type",account_id,merchant,category,sub_category) VALUES
 	 (10000,'2024-01-01','Credit',1,'Starting Balance','System Category','Starting Balance'),
 	 (50000,'2024-01-01','Credit',2,'Starting Balance','System Category','Starting Balance');
+                    ''')
+        cur.execute('''
+INSERT INTO budget_categories (budget_category_id, name) VALUES
+                    (1, 'System Category')
+                    , (2, 'Unknown Budget Category');
+                    ''')
+        cur.execute('''
+INSERT INTO spending_categories(spending_category_id, name) VALUES
+                    (1, 'Starting Balance')
+                    ,(2, 'Unknown Spending Category');
                     ''')
         new_connection.commit()
         print(f"Successfully created sqlite file {dest_path}")

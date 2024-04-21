@@ -72,25 +72,6 @@ class SQLTest(toga.App):
         transaction_container.add(transaction_loading_label)
         self.transaction_container = transaction_container
 
-        cmd1 = toga.Command(
-            self.show_add_account_window,
-            "Edit Accounts",
-            tooltip="Edit Accounts",
-            icon=toga.Icon.DEFAULT_ICON,
-        )
-        cmd2 = toga.Command(
-            self.show_add_transaction_window,
-            "Add Transaction",
-            tooltip="Add New Transactions",
-            icon=toga.Icon.DEFAULT_ICON,
-        )
-        cmd3 = toga.Command(
-            self.switch_to_main_window,
-            "Main Window",
-            tooltip="Switch back to main window",
-            icon=toga.Icon.DEFAULT_ICON,
-        )
-        self.main_window.toolbar.add(cmd1, cmd2, cmd3)
         self.build_desktop_account_list()
         self.build_desktop_transaction_list()
 
@@ -104,6 +85,34 @@ class SQLTest(toga.App):
     def switch_to_main_window(self, widget):
         print("Switching to main window")
         self.show_main_window()
+
+
+    def build_desktop_navigation(self):
+        accounts_cmd = toga.Command(
+            self.show_add_account_window,
+            "Accounts",
+            tooltip="Accounts",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        categories_cmd = toga.Command(
+            self.show_categories_window,
+            "Categories",
+            tooltip="Categories",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        transactions_cmd = toga.Command(
+            self.show_add_transaction_window,
+            "Transactions",
+            tooltip="Transactions",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        main_window_cmd = toga.Command(
+            self.switch_to_main_window,
+            " @ Main Window",
+            tooltip="Switch back to main window",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
+        self.main_window.toolbar.add(main_window_cmd, accounts_cmd, categories_cmd, transactions_cmd)
 
     
     def show_main_window(self):
@@ -119,25 +128,7 @@ class SQLTest(toga.App):
 
         self.main_window.content = split
 
-        cmd1 = toga.Command(
-            self.show_add_account_window,
-            "Edit Accounts",
-            tooltip="Edit Accounts",
-            icon=toga.Icon.DEFAULT_ICON,
-        )
-        cmd2 = toga.Command(
-            self.show_add_transaction_window,
-            "Add Transaction",
-            tooltip="Add New Transactions",
-            icon=toga.Icon.DEFAULT_ICON,
-        )
-        cmd3 = toga.Command(
-            self.switch_to_main_window,
-            "Main Window",
-            tooltip="Switch back to main window",
-            icon=toga.Icon.DEFAULT_ICON,
-        )
-        self.main_window.toolbar.add(cmd1, cmd2, cmd3)
+        self.build_desktop_navigation()
         self.main_window.show()
 
 
@@ -174,12 +165,19 @@ class SQLTest(toga.App):
         account_cur.execute(sql_statement, (self.account_name_input.value, self.account_type_selection.value.name))
         self.con.commit()
 
+
     def add_account_callback(self, widget):
         self.add_account_to_db()
         self.build_desktop_account_list()
         split = toga.SplitContainer(content=[self.account_list_container, self.transaction_container])
 
         self.main_window.content = split
+
+
+    def show_categories_window(self, widget):
+        categories_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
+        categories_box.add(toga.Label("Add Category:"))
+        self.main_window.content = categories_box
 
 
     def show_add_transaction_window(self, widget):
@@ -276,14 +274,6 @@ class SQLTest(toga.App):
         trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_category_input.value, self.transaction_sub_category_input.value))
         self.con.commit()
 
-
-    def action2(self, widget):
-        if self.main_window.question_dialog("Toga", "Is this cool or what?"):
-            self.main_window.info_dialog("Happiness", "I know, right! :-)")
-        else:
-            self.main_window.info_dialog(
-                "Shucks...", "Well aren't you a spoilsport... :-("
-            )
 
     def build_desktop_account_list(self):
         cur = self.con.cursor()

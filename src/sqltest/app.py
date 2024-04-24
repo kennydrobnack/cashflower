@@ -158,7 +158,7 @@ class SQLTest(toga.App):
         self.main_window.content = add_account_box
 
 
-    def add_account_to_db(self, account_name, account_type):
+    def add_account_to_db(self):
         account_cur = self.con.cursor()
         sql_statement = f"INSERT INTO accounts (name, type) values (?, ?)"
         print(f"Running {sql_statement} with values {self.account_name_input.value} and {self.account_type_selection.value.name}")
@@ -177,8 +177,25 @@ class SQLTest(toga.App):
     def show_categories_window(self, widget):
         categories_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         categories_box.add(toga.Label("Add Category:"))
+        categories_box.add(toga.Label("Category Name:"))
+        self.category_name_input = toga.TextInput(placeholder="Category name", style=Pack(width=200))
+        categories_box.add(self.category_name_input)
+        add_category_button = toga.Button("Add Category", on_press=self.add_category_callback, style=Pack(width=200))
+        categories_box.add(add_category_button)
         self.main_window.content = categories_box
 
+
+    def add_category_callback(self, widget):
+        print("Adding category:")
+        categories_cur = self.con.cursor()
+        sql_statement = "INSERT INTO budget_categories (name) values (?)"
+        category_name = self.category_name_input.value
+        print(f"Running SQL statement {sql_statement} with value {category_name}")
+        #TODO: get this using proper id's. If you only pass in one arg and it's a string, Python/sqlite interpret this as a list of chars.
+        # wrapping the variable in [] fixes this.
+        # See: https://techoverflow.net/2019/10/14/how-to-fix-sqlite3-python-incorrect-number-of-bindings-supplied-the-current-statement-uses-1-supplied/
+        categories_cur.execute(sql_statement, ([category_name]))
+        self.con.commit()
 
     def show_add_transaction_window(self, widget):
         transaction_box = toga.Box(style=Pack(direction=COLUMN, padding=10))

@@ -146,6 +146,7 @@ class SQLTest(toga.App):
                 {"name": "Cash"},
                 {"name": "Checking"},
                 {"name": "Savings"},
+                {"name": "Credit Card"}
             ],
             accessor="name",
         )
@@ -160,7 +161,7 @@ class SQLTest(toga.App):
 
     def add_account_to_db(self):
         account_cur = self.con.cursor()
-        sql_statement = f"INSERT INTO accounts (name, type) values (?, ?)"
+        sql_statement = f"INSERT INTO accounts (name, account_type) values (?, ?)"
         print(f"Running {sql_statement} with values {self.account_name_input.value} and {self.account_type_selection.value.name}")
         account_cur.execute(sql_statement, (self.account_name_input.value, self.account_type_selection.value.name))
         self.con.commit()
@@ -371,20 +372,19 @@ class SQLTest(toga.App):
         cur = new_connection.cursor()
         cur.execute('''
 CREATE TABLE accounts (
-	id INTEGER,
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	name TEXT,
-	"type" TEXT DEFAULT ('Checking') NOT NULL,
-	CONSTRAINT ACCOUNTS_PK PRIMARY KEY (id)
+	account_type TEXT DEFAULT ('Checking') NOT NULL
 );
                     ''')
         cur.execute('''
 CREATE TABLE budget_categories(
-    budget_category_id INTEGER,
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name TEXT);
                     ''')
         cur.execute('''
 CREATE TABLE spending_categories(
-    spending_category_id INTEGER,
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name TEXT);
                     ''')
         cur.execute('''
@@ -392,31 +392,31 @@ CREATE TABLE transactions (
 	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	amount INTEGER NOT NULL,
 	date INTEGER NOT NULL,
-	"type" text DEFAULT ('debit') NOT NULL,
+	transaction_type text DEFAULT ('debit') NOT NULL,
     account_id INTEGER NOT NULL,
     merchant TEXT,
     category TEXT DEFAULT ('Uncategorized') NOT NULL,
     sub_category TEXT DEFAULT ('None') NOT NULL);
                           ''')
         cur.execute('''
-INSERT INTO accounts (id,name,"type") VALUES
-	 (1,'Checking','Checking'),
-	 (2,'Savings','Savings');
+INSERT INTO accounts (name,account_type) VALUES
+	 ('Checking','Checking'),
+	 ('Savings','Savings');
                     ''')
         cur.execute('''
-INSERT INTO transactions (amount,date,"type",account_id,merchant,category,sub_category) VALUES
+INSERT INTO transactions (amount,date,transaction_type,account_id,merchant,category,sub_category) VALUES
 	 (10000,'2024-01-01','Credit',1,'Starting Balance','System Category','Starting Balance'),
 	 (50000,'2024-01-01','Credit',2,'Starting Balance','System Category','Starting Balance');
                     ''')
         cur.execute('''
-INSERT INTO budget_categories (budget_category_id, name) VALUES
-                    (1, 'System Category')
-                    , (2, 'Unknown Budget Category');
+INSERT INTO budget_categories (name) VALUES
+                    ('System Category')
+                    ,('Unknown Budget Category');
                     ''')
         cur.execute('''
-INSERT INTO spending_categories(spending_category_id, name) VALUES
-                    (1, 'Starting Balance')
-                    ,(2, 'Unknown Spending Category');
+INSERT INTO spending_categories(name) VALUES
+                    ('Starting Balance')
+                    ,('Unknown Spending Category');
                     ''')
         new_connection.commit()
         print(f"Successfully created sqlite file {dest_path}")

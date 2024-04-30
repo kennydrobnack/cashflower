@@ -183,6 +183,25 @@ class SQLTest(toga.App):
         categories_box.add(self.category_name_input)
         add_category_button = toga.Button("Add Category", on_press=self.add_category_callback, style=Pack(width=200))
         categories_box.add(add_category_button)
+
+        cur = self.con.cursor()
+        categories_res = cur.execute("SELECT id, name FROM budget_categories ORDER BY Name")
+        rows = []
+        self.budget_category_list = categories_res.fetchall()
+        for row in self.budget_category_list:
+            data = {
+                "subtitle": row[1],
+            }
+            rows.append(data)
+        cur.close()
+
+        # display table
+        table = toga.DetailedList(
+            data=rows,
+            style=Pack(flex=1),
+        )
+        categories_box.add(table)
+
         self.main_window.content = categories_box
 
 
@@ -197,6 +216,8 @@ class SQLTest(toga.App):
         # See: https://techoverflow.net/2019/10/14/how-to-fix-sqlite3-python-incorrect-number-of-bindings-supplied-the-current-statement-uses-1-supplied/
         categories_cur.execute(sql_statement, ([category_name]))
         self.con.commit()
+        self.show_categories_window(widget)
+
 
     def show_add_transaction_window(self, widget):
         transaction_box = toga.Box(style=Pack(direction=COLUMN, padding=10))

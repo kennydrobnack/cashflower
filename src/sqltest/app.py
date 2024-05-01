@@ -279,8 +279,33 @@ class SQLTest(toga.App):
 
         self.transaction_category_input = toga.TextInput(placeholder="Category", style=Pack(width=200))
         transaction_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_category_box.add(toga.Label("Category:"))
-        transaction_category_box.add(self.transaction_category_input)
+
+        cur = self.con.cursor()
+        categories_res = cur.execute("SELECT id, name FROM budget_categories ORDER BY Name")
+        rows = []
+        self.budget_category_list = categories_res.fetchall()
+
+
+        budget_list_options = ListSource(
+            accessors=["name", "budget_category_id"],
+            data = []
+        )
+
+        for row in self.budget_category_list:
+            data = {
+                "name": row[1],
+                "budget_category_id": row[0]
+            }
+            budget_list_options.append(data)
+
+        self.transaction_budget_selection = toga.Selection(
+            items=budget_list_options,
+            accessor="name"
+        )
+
+        transaction_category_box.add(toga.Label("Budget Category:"))
+        transaction_category_box.add(self.transaction_budget_selection)
+
 
         self.transaction_sub_category_input = toga.TextInput(placeholder="Sub-Category", style=Pack(width=200))
         transaction_sub_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
@@ -310,7 +335,7 @@ class SQLTest(toga.App):
                                             "%m/%d/%Y").timetuple())
 
         print(f"Running {sql_statement} with values {transaction_timestamp} and {int(self.transaction_amount_input.value)}")
-        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_category_input.value, self.transaction_sub_category_input.value))
+        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_budget_selection.value.budget_category_id, self.transaction_sub_category_input.value))
         self.con.commit()
 
 

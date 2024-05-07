@@ -183,9 +183,16 @@ class SQLTest(toga.App):
         categories_box.add(self.category_name_input)
         add_category_button = toga.Button("Add Category", on_press=self.add_category_callback, style=Pack(width=200))
         categories_box.add(add_category_button)
+        
+        categories_box.add(toga.Label("Add Spending Category:"))
+        categories_box.add(toga.Label("Spending Category Name:"))
+        self.spending_category_name_input = toga.TextInput(placeholder="Spending Category Name", style=Pack(width=300))
+        categories_box.add(self.spending_category_name_input)
+        add_spending_category_button = toga.Button("Add Spending Category", on_press=self.add_spending_category_callback, style=Pack(width=200))
+        categories_box.add(add_spending_category_button)
 
-        cur = self.con.cursor()
-        categories_res = cur.execute("SELECT id, name FROM budget_categories ORDER BY Name")
+        budget_cur = self.con.cursor()
+        categories_res = budget_cur.execute("SELECT id, name FROM budget_categories ORDER BY Name")
         rows = []
         self.budget_category_list = categories_res.fetchall()
         for row in self.budget_category_list:
@@ -193,14 +200,33 @@ class SQLTest(toga.App):
                 "subtitle": row[1],
             }
             rows.append(data)
-        cur.close()
+        budget_cur.close()
 
         # display table
-        table = toga.DetailedList(
+        budget_categories_table = toga.DetailedList(
             data=rows,
             style=Pack(flex=1),
         )
-        categories_box.add(table)
+        categories_box.add(budget_categories_table)
+
+
+        spending_cur = self.con.cursor()
+        spending_categories_res = spending_cur.execute("SELECT id, name FROM spending_categories ORDER BY Name")
+        rows = []
+        self.spending_category_list = spending_categories_res.fetchall()
+        for row in self.spending_category_list:
+            data = {
+                "subtitle": row[1],
+            }
+            rows.append(data)
+        spending_cur.close()
+
+        # display table
+        spending_categories_table = toga.DetailedList(
+            data=rows,
+            style=Pack(flex=1),
+        )
+        categories_box.add(spending_categories_table)
 
         self.main_window.content = categories_box
 
@@ -215,6 +241,20 @@ class SQLTest(toga.App):
         # wrapping the variable in [] fixes this.
         # See: https://techoverflow.net/2019/10/14/how-to-fix-sqlite3-python-incorrect-number-of-bindings-supplied-the-current-statement-uses-1-supplied/
         categories_cur.execute(sql_statement, ([category_name]))
+        self.con.commit()
+        self.show_categories_window(widget)
+
+
+    def add_spending_category_callback(self, widget):
+        print("Adding spending category:")
+        spending_categories_cur = self.con.cursor()
+        sql_statement = "INSERT INTO spending_categories (name) values (?)"
+        category_name = self.spending_category_name_input.value
+        print(f"Running SQL statement {sql_statement} with value {category_name}")
+        #TODO: get this using proper id's. If you only pass in one arg and it's a string, Python/sqlite interpret this as a list of chars.
+        # wrapping the variable in [] fixes this.
+        # See: https://techoverflow.net/2019/10/14/how-to-fix-sqlite3-python-incorrect-number-of-bindings-supplied-the-current-statement-uses-1-supplied/
+        spending_categories_cur.execute(sql_statement, ([category_name]))
         self.con.commit()
         self.show_categories_window(widget)
 

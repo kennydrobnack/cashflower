@@ -131,6 +131,18 @@ class SQLTest(toga.App):
         self.build_desktop_navigation()
         self.main_window.show()
 
+    def get_spending_category_list(self):
+        spending_cur = self.con.cursor()
+        spending_categories_res = spending_cur.execute("SELECT id, name FROM spending_categories ORDER BY Name")
+        rows = []
+        self.spending_category_list = spending_categories_res.fetchall()
+        for row in self.spending_category_list:
+            data = {
+                "subtitle": row[1],
+            }
+            rows.append(data)
+        spending_cur.close()
+
 
     def show_add_account_window(self, widget):
         add_account_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
@@ -176,6 +188,7 @@ class SQLTest(toga.App):
 
 
     def show_categories_window(self, widget):
+        self.get_spending_category_list()
         categories_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         categories_box.add(toga.Label("Add Category:"))
         categories_box.add(toga.Label("Category Name:"))
@@ -183,14 +196,7 @@ class SQLTest(toga.App):
         categories_box.add(self.category_name_input)
         add_category_button = toga.Button("Add Category", on_press=self.add_category_callback, style=Pack(width=200))
         categories_box.add(add_category_button)
-        
-        categories_box.add(toga.Label("Add Spending Category:"))
-        categories_box.add(toga.Label("Spending Category Name:"))
-        self.spending_category_name_input = toga.TextInput(placeholder="Spending Category Name", style=Pack(width=300))
-        categories_box.add(self.spending_category_name_input)
-        add_spending_category_button = toga.Button("Add Spending Category", on_press=self.add_spending_category_callback, style=Pack(width=200))
-        categories_box.add(add_spending_category_button)
-
+    
         budget_cur = self.con.cursor()
         categories_res = budget_cur.execute("SELECT id, name FROM budget_categories ORDER BY Name")
         rows = []
@@ -201,6 +207,34 @@ class SQLTest(toga.App):
             }
             rows.append(data)
         budget_cur.close()
+        
+        categories_box.add(toga.Label("Add Spending Category:"))
+
+        budget_list_options = ListSource(
+            accessors=["name", "id"],
+            data = []
+        )
+
+        for row in self.budget_category_list:
+            data = {
+                "name": row[1],
+                "id": row[0]
+            }
+            budget_list_options.append(data)
+
+        self.parent_budget_category_selection = toga.Selection(
+            items=budget_list_options,
+            accessor="name"
+        )
+
+        categories_box.add(toga.Label("Parent Budget Category:"))
+        categories_box.add(self.parent_budget_category_selection)
+
+        categories_box.add(toga.Label("Spending Category Name:"))
+        self.spending_category_name_input = toga.TextInput(placeholder="Spending Category Name", style=Pack(width=300))
+        categories_box.add(self.spending_category_name_input)
+        add_spending_category_button = toga.Button("Add Spending Category", on_press=self.add_spending_category_callback, style=Pack(width=200))
+        categories_box.add(add_spending_category_button)
 
         # display table
         budget_categories_table = toga.DetailedList(
@@ -210,16 +244,7 @@ class SQLTest(toga.App):
         categories_box.add(budget_categories_table)
 
 
-        spending_cur = self.con.cursor()
-        spending_categories_res = spending_cur.execute("SELECT id, name FROM spending_categories ORDER BY Name")
-        rows = []
-        self.spending_category_list = spending_categories_res.fetchall()
-        for row in self.spending_category_list:
-            data = {
-                "subtitle": row[1],
-            }
-            rows.append(data)
-        spending_cur.close()
+
 
         # display table
         spending_categories_table = toga.DetailedList(
@@ -248,13 +273,14 @@ class SQLTest(toga.App):
     def add_spending_category_callback(self, widget):
         print("Adding spending category:")
         spending_categories_cur = self.con.cursor()
-        sql_statement = "INSERT INTO spending_categories (name) values (?)"
+        sql_statement = "INSERT INTO spending_categories (name, parent_category_id) values (?, ?)"
         category_name = self.spending_category_name_input.value
-        print(f"Running SQL statement {sql_statement} with value {category_name}")
+        parent_category_id = self.parent_budget_category_selection.value.id
+        print(f"Running SQL statement {sql_statement} with value {category_name} and {parent_category_id}")
         #TODO: get this using proper id's. If you only pass in one arg and it's a string, Python/sqlite interpret this as a list of chars.
         # wrapping the variable in [] fixes this.
         # See: https://techoverflow.net/2019/10/14/how-to-fix-sqlite3-python-incorrect-number-of-bindings-supplied-the-current-statement-uses-1-supplied/
-        spending_categories_cur.execute(sql_statement, ([category_name]))
+        spending_categories_cur.execute(sql_statement, ([category_name, parent_category_id]))
         self.con.commit()
         self.show_categories_window(widget)
 
@@ -347,10 +373,31 @@ class SQLTest(toga.App):
         transaction_category_box.add(self.transaction_budget_selection)
 
 
-        self.transaction_sub_category_input = toga.TextInput(placeholder="Sub-Category", style=Pack(width=200))
-        transaction_sub_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_sub_category_box.add(toga.Label("Sub-Category:"))
-        transaction_sub_category_box.add(self.transaction_sub_category_input)
+        # self.transaction_sub_category_input = toga.TextInput(placeholder="Sub-Category", style=Pack(width=200))
+        # transaction_sub_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        # transaction_sub_category_box.add(toga.Label("Sub-Category:"))
+        # transaction_sub_category_box.add(self.transaction_sub_category_input)
+
+        spending_list_options = ListSource(
+            accessors=["name", "id"],
+            data = []
+        )
+        self.get_spending_category_list()
+
+        for row in self.spending_category_list:
+            data = {
+                "name": row[1],
+                "id": row[0]
+            }
+            spending_list_options.append(data)
+
+        self.transaction_spending_selection = toga.Selection(
+            items=spending_list_options,
+            accessor="name"
+        )
+
+        transaction_category_box.add(toga.Label("Spending Category:"))
+        transaction_category_box.add(self.transaction_spending_selection)
         
         transaction_box.add(transaction_date_box,
                             transaction_amount_box,
@@ -358,8 +405,7 @@ class SQLTest(toga.App):
                             transaction_type_box,
                             transaction_account_box,
                             transaction_merchant_box,
-                            transaction_category_box,
-                            transaction_sub_category_box)
+                            transaction_category_box)
         
         add_transaction_button = toga.Button("Add Transaction", on_press=self.add_transaction_callback, style=Pack(width=200))
         transaction_box.add(add_transaction_button)
@@ -471,7 +517,9 @@ CREATE TABLE budget_categories(
         cur.execute('''
 CREATE TABLE spending_categories(
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    name TEXT);
+    parent_category_id INTEGER NOT NULL,
+    name TEXT,
+    FOREIGN KEY(parent_category_id) REFERENCES budget_categories(id));
                     ''')
         cur.execute('''
 CREATE TABLE transactions (
@@ -500,9 +548,9 @@ INSERT INTO budget_categories (name) VALUES
                     ,('Unknown Budget Category');
                     ''')
         cur.execute('''
-INSERT INTO spending_categories(name) VALUES
-                    ('Starting Balance')
-                    ,('Unknown Spending Category');
+INSERT INTO spending_categories(parent_category_id, name) VALUES
+                    (1, 'Starting Balance')
+                    ,(1, 'Unknown Spending Category');
                     ''')
         new_connection.commit()
         print(f"Successfully created sqlite file {dest_path}")

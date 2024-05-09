@@ -131,16 +131,30 @@ class SQLTest(toga.App):
         self.build_desktop_navigation()
         self.main_window.show()
 
+
+    def get_budget_category_list(self):
+        budget_cur = self.con.cursor()
+        categories_res = budget_cur.execute("SELECT id, name FROM budget_categories ORDER BY Name")
+        self.budget_category_rows = []
+        self.budget_category_list = categories_res.fetchall()
+        for row in self.budget_category_list:
+            data = {
+                "subtitle": row[1],
+            }
+            self.budget_category_rows.append(data)
+        budget_cur.close()
+
+
     def get_spending_category_list(self):
         spending_cur = self.con.cursor()
         spending_categories_res = spending_cur.execute("SELECT id, name FROM spending_categories ORDER BY Name")
-        rows = []
+        self.spending_category_rows = []
         self.spending_category_list = spending_categories_res.fetchall()
         for row in self.spending_category_list:
             data = {
                 "subtitle": row[1],
             }
-            rows.append(data)
+            self.spending_category_rows.append(data)
         spending_cur.close()
 
 
@@ -188,6 +202,7 @@ class SQLTest(toga.App):
 
 
     def show_categories_window(self, widget):
+        self.get_budget_category_list()
         self.get_spending_category_list()
         categories_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         categories_box.add(toga.Label("Add Category:"))
@@ -197,17 +212,6 @@ class SQLTest(toga.App):
         add_category_button = toga.Button("Add Category", on_press=self.add_category_callback, style=Pack(width=200))
         categories_box.add(add_category_button)
     
-        budget_cur = self.con.cursor()
-        categories_res = budget_cur.execute("SELECT id, name FROM budget_categories ORDER BY Name")
-        rows = []
-        self.budget_category_list = categories_res.fetchall()
-        for row in self.budget_category_list:
-            data = {
-                "subtitle": row[1],
-            }
-            rows.append(data)
-        budget_cur.close()
-        
         categories_box.add(toga.Label("Add Spending Category:"))
 
         budget_list_options = ListSource(
@@ -238,17 +242,14 @@ class SQLTest(toga.App):
 
         # display table
         budget_categories_table = toga.DetailedList(
-            data=rows,
+            data=self.budget_category_rows,
             style=Pack(flex=1),
         )
         categories_box.add(budget_categories_table)
 
-
-
-
         # display table
         spending_categories_table = toga.DetailedList(
-            data=rows,
+            data=self.spending_category_rows,
             style=Pack(flex=1),
         )
         categories_box.add(spending_categories_table)
@@ -415,13 +416,13 @@ class SQLTest(toga.App):
     def add_transaction_callback(self, widget):
         print("Adding transaction:")
         trans_cur = self.con.cursor()
-        sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant, category, sub_category) values (?, ?, ?, ?, ?, ?)"
+        sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant, budget_category_id, spending_category_id) values (?, ?, ?, ?, ?, ?)"
 
         transaction_timestamp = time.mktime(datetime.datetime.strptime(self.transaction_date_input.value,
                                             "%m/%d/%Y").timetuple())
 
         print(f"Running {sql_statement} with values {transaction_timestamp} and {int(self.transaction_amount_input.value)}")
-        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_budget_selection.value.budget_category_id, self.transaction_sub_category_input.value))
+        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_budget_selection.value.budget_category_id, self.transaction_spending_selection.value.id))
         self.con.commit()
 
 
@@ -451,11 +452,11 @@ class SQLTest(toga.App):
     
     def build_desktop_transaction_list(self):
         trans_cur = self.con.cursor()
-        trans_res = trans_cur.execute("SELECT id, amount, date, account_id, merchant, category, sub_category FROM transactions ORDER BY date")
+        trans_res = trans_cur.execute("SELECT t.id, amount, date, account_id, merchant, b.name, s.name FROM transactions t, budget_categories b, spending_categories s where t.budget_category_id = b.id and t.spending_category_id = s.id ORDER BY date")
         trans_rows = []
         for trans_row in trans_res.fetchall():
             trans_data = {
-                "title": trans_row[4],
+                "title": f"{trans_row[4]} {trans_row[5]} {trans_row[6]}",
                 "subtitle": locale.currency(trans_row[1], grouping=True),
             }
             # trans_data = {
@@ -522,27 +523,6 @@ CREATE TABLE spending_categories(
     FOREIGN KEY(parent_category_id) REFERENCES budget_categories(id));
                     ''')
         cur.execute('''
-CREATE TABLE transactions (
-	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	amount INTEGER NOT NULL,
-	date INTEGER NOT NULL,
-	transaction_type text DEFAULT ('debit') NOT NULL,
-    account_id INTEGER NOT NULL,
-    merchant TEXT,
-    category TEXT DEFAULT ('Uncategorized') NOT NULL,
-    sub_category TEXT DEFAULT ('None') NOT NULL);
-                          ''')
-        cur.execute('''
-INSERT INTO accounts (name,account_type) VALUES
-	 ('Checking','Checking'),
-	 ('Savings','Savings');
-                    ''')
-        cur.execute('''
-INSERT INTO transactions (amount,date,transaction_type,account_id,merchant,category,sub_category) VALUES
-	 (10000,'2024-01-01','Credit',1,'Starting Balance','System Category','Starting Balance'),
-	 (50000,'2024-01-01','Credit',2,'Starting Balance','System Category','Starting Balance');
-                    ''')
-        cur.execute('''
 INSERT INTO budget_categories (name) VALUES
                     ('System Category')
                     ,('Unknown Budget Category');
@@ -552,6 +532,28 @@ INSERT INTO spending_categories(parent_category_id, name) VALUES
                     (1, 'Starting Balance')
                     ,(1, 'Unknown Spending Category');
                     ''')
+        cur.execute('''
+CREATE TABLE transactions (
+	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	amount INTEGER NOT NULL,
+	date INTEGER NOT NULL,
+	transaction_type text DEFAULT ('debit') NOT NULL,
+    account_id INTEGER NOT NULL,
+    merchant TEXT,
+    budget_category_id INTEGER,
+    spending_category_id INTEGER);
+                          ''')
+        cur.execute('''
+INSERT INTO accounts (name,account_type) VALUES
+	 ('Checking','Checking'),
+	 ('Savings','Savings');
+                    ''')
+        cur.execute('''
+INSERT INTO transactions (amount, date, transaction_type, account_id, merchant, budget_category_id, spending_category_id) VALUES
+	 (10000, '2024-01-01', 'Credit', 1, 'Starting Balance', 1, 1),
+	 (50000, '2024-01-01', 'Credit', 2, 'Starting Balance', 1, 1);
+                    ''')
+
         new_connection.commit()
         print(f"Successfully created sqlite file {dest_path}")
 

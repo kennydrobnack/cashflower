@@ -418,11 +418,11 @@ class SQLTest(toga.App):
         trans_cur = self.con.cursor()
         sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant, budget_category_id, spending_category_id) values (?, ?, ?, ?, ?, ?)"
 
-        transaction_timestamp = time.mktime(datetime.datetime.strptime(self.transaction_date_input.value,
+        transaction_datetime = time.mktime(datetime.datetime.strptime(self.transaction_date_input.value,
                                             "%m/%d/%Y").timetuple())
 
-        print(f"Running {sql_statement} with values {transaction_timestamp} and {int(self.transaction_amount_input.value)}")
-        trans_cur.execute(sql_statement, (transaction_timestamp, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_budget_selection.value.budget_category_id, self.transaction_spending_selection.value.id))
+        print(f"Running {sql_statement} with values {transaction_datetime} and {int(self.transaction_amount_input.value)}")
+        trans_cur.execute(sql_statement, (transaction_datetime, int(self.transaction_amount_input.value), int(self.transaction_account_selection.value.account_id), self.transaction_merchant_input.value, self.transaction_budget_selection.value.budget_category_id, self.transaction_spending_selection.value.id))
         self.con.commit()
 
 
@@ -452,12 +452,12 @@ class SQLTest(toga.App):
     
     def build_desktop_transaction_list(self):
         trans_cur = self.con.cursor()
-        trans_res = trans_cur.execute("SELECT t.id, amount, date, account_id, merchant, b.name, s.name FROM transactions t, budget_categories b, spending_categories s where t.budget_category_id = b.id and t.spending_category_id = s.id ORDER BY date")
+        trans_res = trans_cur.execute("SELECT t.id, amount, datetime(date, 'unixepoch', 'localtime') as date, account_id, merchant, b.name, s.name FROM transactions t, budget_categories b, spending_categories s where t.budget_category_id = b.id and t.spending_category_id = s.id ORDER BY date")
         trans_rows = []
         for trans_row in trans_res.fetchall():
             trans_data = {
                 "title": f"{trans_row[4]} {trans_row[5]} {trans_row[6]}",
-                "subtitle": locale.currency(trans_row[1], grouping=True),
+                "subtitle": f"{locale.currency(trans_row[1], grouping=True)} Date: {trans_row[2]}",
             }
             # trans_data = {
             #     "id": trans_row[0],
@@ -548,11 +548,13 @@ INSERT INTO accounts (name,account_type) VALUES
 	 ('Checking','Checking'),
 	 ('Savings','Savings');
                     ''')
+
+        transaction_datetime = time.mktime(datetime.datetime.strptime("2024-04-01", "%Y-%m-%d").timetuple())
         cur.execute('''
 INSERT INTO transactions (amount, date, transaction_type, account_id, merchant, budget_category_id, spending_category_id) VALUES
-	 (10000, '2024-01-01', 'Credit', 1, 'Starting Balance', 1, 1),
-	 (50000, '2024-01-01', 'Credit', 2, 'Starting Balance', 1, 1);
-                    ''')
+	 (10000, ?, 'Credit', 1, 'Starting Balance', 1, 1),
+	 (50000, ?, 'Credit', 2, 'Starting Balance', 1, 1);
+                    ''', (transaction_datetime, transaction_datetime))
 
         new_connection.commit()
         print(f"Successfully created sqlite file {dest_path}")

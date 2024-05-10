@@ -452,7 +452,7 @@ class SQLTest(toga.App):
     
     def build_desktop_transaction_list(self):
         trans_cur = self.con.cursor()
-        trans_res = trans_cur.execute("SELECT t.id, amount, datetime(date, 'unixepoch', 'localtime') as date, account_id, merchant, b.name, s.name FROM transactions t, budget_categories b, spending_categories s where t.budget_category_id = b.id and t.spending_category_id = s.id ORDER BY date")
+        trans_res = trans_cur.execute("SELECT t.id, amount, date(date, 'unixepoch') as date, account_id, merchant, b.name, s.name FROM transactions t, budget_categories b, spending_categories s where t.budget_category_id = b.id and t.spending_category_id = s.id ORDER BY date")
         trans_rows = []
         for trans_row in trans_res.fetchall():
             trans_data = {

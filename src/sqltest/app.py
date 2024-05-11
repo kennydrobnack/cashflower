@@ -255,19 +255,43 @@ class SQLTest(toga.App):
         )
         categories_box.add(add_spending_category_button)
 
-        # display table
-        budget_categories_table = toga.DetailedList(
-            data=self.budget_category_rows,
-            style=Pack(flex=1),
-        )
-        categories_box.add(budget_categories_table)
 
-        # display table
-        spending_categories_table = toga.DetailedList(
-            data=self.spending_category_rows,
-            style=Pack(flex=1),
+        # tree = toga.Tree(
+        #     headings=["Name", "Age"],
+        #     data={
+        #         "Earth": {
+        #            ("Arthur Dent", 42): None,
+        #         },
+        #         "Betelgeuse Five": {
+        #            ("Ford Prefect", 37): None,
+        #            ("Zaphod Beeblebrox", 47): None,
+        #         },
+        #     }
+        # )
+        caetogry_tree = toga.Tree(
+            headings=["Budget Category/Spending Category", "Amount Remaining"],
+            data={
+                "System Category": {
+                    ("Starting Balance", "$2,000.00"): None,
+                    ("Unknown Spending Category", "$10.00"): None
+                }
+            }
         )
-        categories_box.add(spending_categories_table)
+        categories_box.add(caetogry_tree)
+
+        # # display table
+        # budget_categories_table = toga.DetailedList(
+        #     data=self.budget_category_rows,
+        #     style=Pack(flex=1),
+        # )
+        # categories_box.add(budget_categories_table)
+
+        # # display table
+        # spending_categories_table = toga.DetailedList(
+        #     data=self.spending_category_rows,
+        #     style=Pack(flex=1),
+        # )
+        #categories_box.add(spending_categories_table)
 
         self.main_window.content = categories_box
 
@@ -495,6 +519,7 @@ class SQLTest(toga.App):
             "SELECT t.id, amount, date(date, 'unixepoch') as date, account_id, merchant, description, notes, b.name, s.name FROM transactions t, budget_categories b, spending_categories s where t.budget_category_id = b.id and t.spending_category_id = s.id ORDER BY date"
         )
         trans_rows = []
+
         for trans_row in trans_res.fetchall():
             trans_data = {
                 "title": f"{trans_row[4]} {trans_row[5]} {trans_row[6]} {trans_row[7]} {trans_row[8]}",

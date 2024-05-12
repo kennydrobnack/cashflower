@@ -268,14 +268,42 @@ class SQLTest(toga.App):
         #         },
         #     }
         # )
-        caetogry_tree = toga.Tree(
-            headings=["Budget Category/Spending Category", "Amount Remaining"],
-            data={
-                "System Category": {
-                    ("Starting Balance", "$2,000.00"): None,
-                    ("Unknown Spending Category", "$10.00"): None
-                }
-            }
+        # tree = toga.Tree(
+        #     headings=["Name", "Age"],
+        #     accessors={"Name", 'character'},
+        #     data=[
+        #         (
+        #             {"character": "Earth"},
+        #             [({"character": "Arthur Dent", "age": 42, "status": "Anxious"}, None)]
+        #         ),
+        #         (
+        #             {"character": "Betelgeuse Five"},
+        #             [
+        #                 ({"character": "Ford Prefect", "age": 37, "status": "Hoopy"}, None),
+        #                 ({"character": "Zaphod Beeblebrox", "age": 47, "status": "Oblivious"}, None),
+        #             ]
+        #         ),
+        #     ]
+        # )
+
+        caetogry_tree = toga.Table(
+            headings=["Budget Category", "Spending Category", "Amount Remaining", "Amount Spent"],
+            style=Pack(height=500),
+            data=(
+                    ("System Category", "", "$500.00", ""),
+                    ("", "Starting Balance", "", "$500.00"),
+                    ("", "Unknown Spending Category", "", "$10.00"),
+                    ("Giving", "", "$200.00", ""),
+                    ("", "Charity" ,"", "$50.00"),
+                    ("", "Tithe", "", "$400.00"),
+                    ("Needs", "", "$2,000.00", ""),
+                    ("Groceries", "", "", "$500.00"),
+                    ("Misc Needs", "", "", "$30.00"),
+                    ("Wants", "", "$1,000.00", ""),
+                    ("", "Ate Out", "", "$150.00"),
+                    ("", "Entertainment", "", "$470.00"),
+                    ("", "Misc Wants", "", "$40.00")        
+            )
         )
         categories_box.add(caetogry_tree)
 

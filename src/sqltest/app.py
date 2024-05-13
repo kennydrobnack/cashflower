@@ -162,6 +162,18 @@ class SQLTest(toga.App):
             self.spending_category_rows.append(data)
         spending_cur.close()
 
+
+    def get_all_categories_data(self):
+        categories_cur = self.con.cursor()
+        categories_res = categories_cur.execute("SELECT b.name as budget_category_name, s.name as spending_category_name FROM budget_categories b LEFT JOIN spending_categories s ON s.parent_category_id =  b.id")
+        self.all_categories = categories_res.fetchall()
+        self.all_categories_rows = []
+        for row in self.all_categories:
+            data = (row[0], row[1])
+            self.all_categories_rows.append(data)
+        categories_cur.close()
+
+
     def show_add_account_window(self, widget):
         add_account_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         add_account_box.add(toga.Label("Add Account:"))
@@ -216,6 +228,7 @@ class SQLTest(toga.App):
     def show_categories_window(self, widget):
         self.get_budget_category_list()
         self.get_spending_category_list()
+        self.get_all_categories_data()
         categories_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         categories_box.add(toga.Label("Add Category:"))
         categories_box.add(toga.Label("Category Name:"))
@@ -255,72 +268,12 @@ class SQLTest(toga.App):
         )
         categories_box.add(add_spending_category_button)
 
-
-        # tree = toga.Tree(
-        #     headings=["Name", "Age"],
-        #     data={
-        #         "Earth": {
-        #            ("Arthur Dent", 42): None,
-        #         },
-        #         "Betelgeuse Five": {
-        #            ("Ford Prefect", 37): None,
-        #            ("Zaphod Beeblebrox", 47): None,
-        #         },
-        #     }
-        # )
-        # tree = toga.Tree(
-        #     headings=["Name", "Age"],
-        #     accessors={"Name", 'character'},
-        #     data=[
-        #         (
-        #             {"character": "Earth"},
-        #             [({"character": "Arthur Dent", "age": 42, "status": "Anxious"}, None)]
-        #         ),
-        #         (
-        #             {"character": "Betelgeuse Five"},
-        #             [
-        #                 ({"character": "Ford Prefect", "age": 37, "status": "Hoopy"}, None),
-        #                 ({"character": "Zaphod Beeblebrox", "age": 47, "status": "Oblivious"}, None),
-        #             ]
-        #         ),
-        #     ]
-        # )
-
         caetogry_tree = toga.Table(
             headings=["Budget Category", "Spending Category", "Amount Remaining", "Amount Spent"],
             style=Pack(height=500),
-            data=(
-                    ("System Category", "", "$500.00", ""),
-                    ("", "Starting Balance", "", "$500.00"),
-                    ("", "Unknown Spending Category", "", "$10.00"),
-                    ("Giving", "", "$200.00", ""),
-                    ("", "Charity" ,"", "$50.00"),
-                    ("", "Tithe", "", "$400.00"),
-                    ("Needs", "", "$2,000.00", ""),
-                    ("Groceries", "", "", "$500.00"),
-                    ("Misc Needs", "", "", "$30.00"),
-                    ("Wants", "", "$1,000.00", ""),
-                    ("", "Ate Out", "", "$150.00"),
-                    ("", "Entertainment", "", "$470.00"),
-                    ("", "Misc Wants", "", "$40.00")        
-            )
+            data=self.all_categories_rows
         )
         categories_box.add(caetogry_tree)
-
-        # # display table
-        # budget_categories_table = toga.DetailedList(
-        #     data=self.budget_category_rows,
-        #     style=Pack(flex=1),
-        # )
-        # categories_box.add(budget_categories_table)
-
-        # # display table
-        # spending_categories_table = toga.DetailedList(
-        #     data=self.spending_category_rows,
-        #     style=Pack(flex=1),
-        # )
-        #categories_box.add(spending_categories_table)
-
         self.main_window.content = categories_box
 
     def add_category_callback(self, widget):

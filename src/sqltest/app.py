@@ -268,13 +268,14 @@ class SQLTest(toga.App):
         )
         categories_box.add(add_spending_category_button)
 
-        caetogry_tree = toga.Table(
+        category_tree = toga.Table(
             headings=["Budget Category", "Spending Category", "Amount Remaining", "Amount Spent"],
             style=Pack(height=500),
             data=self.all_categories_rows
         )
-        categories_box.add(caetogry_tree)
+        categories_box.add(category_tree)
         self.main_window.content = categories_box
+
 
     def add_category_callback(self, widget):
         print("Adding category:")
@@ -318,7 +319,7 @@ class SQLTest(toga.App):
         self.transaction_date_input = toga.TextInput(style=Pack(width=200))
         transaction_date_box.add(self.transaction_date_input)
 
-        self.transaction_amount_input = toga.NumberInput(style=Pack(width=200))
+        self.transaction_amount_input = toga.NumberInput(step=0.01, style=Pack(width=200))
         transaction_amount_box = toga.Box(style=Pack(direction=ROW, padding=5))
         transaction_amount_box.add(toga.Label("Amount:"))
         transaction_amount_box.add(self.transaction_amount_input)

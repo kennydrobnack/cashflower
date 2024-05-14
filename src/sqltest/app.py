@@ -151,7 +151,7 @@ class SQLTest(toga.App):
     def get_spending_category_list(self):
         spending_cur = self.con.cursor()
         spending_categories_res = spending_cur.execute(
-            "SELECT id, name FROM spending_categories ORDER BY Name"
+            "SELECT id, name, parent_category_id FROM spending_categories ORDER BY Name"
         )
         self.spending_category_rows = []
         self.spending_category_list = spending_categories_res.fetchall()
@@ -410,12 +410,15 @@ class SQLTest(toga.App):
         # transaction_sub_category_box.add(toga.Label("Sub-Category:"))
         # transaction_sub_category_box.add(self.transaction_sub_category_input)
 
-        spending_list_options = ListSource(accessors=["name", "id"], data=[])
+        spending_list_options = ListSource(accessors=["name", "id"], data=[{"name": "None", "id": 0}])
         self.get_spending_category_list()
 
         for row in self.spending_category_list:
-            data = {"name": row[1], "id": row[0]}
-            spending_list_options.append(data)
+            print(f"row: {row}")
+            if row[2] and row[2] == self.transaction_budget_selection.value.budget_category_id:
+                print("Found a match")
+                data = {"name": row[1], "id": row[0]}
+                spending_list_options.append(data)
 
         self.transaction_spending_selection = toga.Selection(
             items=spending_list_options, accessor="name"

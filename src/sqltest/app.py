@@ -310,6 +310,24 @@ class SQLTest(toga.App):
         self.con.commit()
         self.show_categories_window(widget)
 
+
+    def update_available_spending_categories_callback(self, widget):
+        self.update_available_spending_categories()
+
+
+    def update_available_spending_categories(self):
+        self.spending_list_options = ListSource(accessors=["name", "id"], data=[{"name": "None", "id": 0}])
+        print(f"Budget category: {self.transaction_budget_selection.value.budget_category_id}")
+        print(f"Spending category list: {self.spending_category_list}")
+        for row in self.spending_category_list:
+            if row[2] and row[2] == self.transaction_budget_selection.value.budget_category_id:
+                data = {"name": row[1], "id": row[0]}
+                self.spending_list_options.append(data)
+        self.transaction_spending_selection = toga.Selection(
+            items=self.spending_list_options, accessor="name"
+        )
+
+
     def show_add_transaction_window(self, widget):
         transaction_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         transaction_box.add(toga.Label("Add Transaction:"))
@@ -390,6 +408,8 @@ class SQLTest(toga.App):
         rows = []
         self.budget_category_list = categories_res.fetchall()
 
+        self.get_spending_category_list()
+
         budget_list_options = ListSource(
             accessors=["name", "budget_category_id"], data=[]
         )
@@ -398,8 +418,10 @@ class SQLTest(toga.App):
             data = {"name": row[1], "budget_category_id": row[0]}
             budget_list_options.append(data)
 
+        self.spending_list_options = ListSource(accessors=["name", "id"], data=[{"name": "None", "id": 0}])
+
         self.transaction_budget_selection = toga.Selection(
-            items=budget_list_options, accessor="name"
+            items=budget_list_options, accessor="name", on_change=self.update_available_spending_categories_callback
         )
 
         transaction_category_box.add(toga.Label("Budget Category:"))
@@ -410,19 +432,7 @@ class SQLTest(toga.App):
         # transaction_sub_category_box.add(toga.Label("Sub-Category:"))
         # transaction_sub_category_box.add(self.transaction_sub_category_input)
 
-        spending_list_options = ListSource(accessors=["name", "id"], data=[{"name": "None", "id": 0}])
-        self.get_spending_category_list()
-
-        for row in self.spending_category_list:
-            print(f"row: {row}")
-            if row[2] and row[2] == self.transaction_budget_selection.value.budget_category_id:
-                print("Found a match")
-                data = {"name": row[1], "id": row[0]}
-                spending_list_options.append(data)
-
-        self.transaction_spending_selection = toga.Selection(
-            items=spending_list_options, accessor="name"
-        )
+        self.update_available_spending_categories() #Populate initial spending category list based on initial budget category
 
         transaction_category_box.add(toga.Label("Spending Category:"))
         transaction_category_box.add(self.transaction_spending_selection)

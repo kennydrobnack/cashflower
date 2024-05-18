@@ -316,16 +316,17 @@ class SQLTest(toga.App):
 
 
     def update_available_spending_categories(self):
-        self.spending_list_options = ListSource(accessors=["name", "id"], data=[{"name": "None", "id": 0}])
+        spending_list_options = ListSource(accessors=["name", "id"], data=[{"name": "None", "id": 0}])
         print(f"Budget category: {self.transaction_budget_selection.value.budget_category_id}")
         print(f"Spending category list: {self.spending_category_list}")
         for row in self.spending_category_list:
             if row[2] and row[2] == self.transaction_budget_selection.value.budget_category_id:
                 data = {"name": row[1], "id": row[0]}
-                self.spending_list_options.append(data)
-        self.transaction_spending_selection = toga.Selection(
-            items=self.spending_list_options, accessor="name"
-        )
+                print(f"spending category: {data}")
+                spending_list_options.append(row[1])
+        print(f"Spending list options is now {spending_list_options}")
+        self.transaction_spending_selection.items = spending_list_options
+#        self.transaction_spending_selection.items = [{"name": self.transaction_budget_selection.value.name, "id": 42}]
 
 
     def show_add_transaction_window(self, widget):
@@ -431,6 +432,10 @@ class SQLTest(toga.App):
         # transaction_sub_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
         # transaction_sub_category_box.add(toga.Label("Sub-Category:"))
         # transaction_sub_category_box.add(self.transaction_sub_category_input)
+
+        self.transaction_spending_selection = toga.Selection(
+            items=self.spending_list_options, accessor="name"
+        )
 
         self.update_available_spending_categories() #Populate initial spending category list based on initial budget category
 

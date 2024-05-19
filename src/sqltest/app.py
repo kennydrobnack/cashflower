@@ -334,24 +334,24 @@ class SQLTest(toga.App):
         transaction_box.add(toga.Label("Add Transaction:"))
 
         transaction_date_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_date_box.add(toga.Label("Date:"))
-        self.transaction_date_input = toga.TextInput(style=Pack(width=200))
+        transaction_date_box.add(toga.Label("Date:", style=Pack(flex=1)))
+        self.transaction_date_input = toga.TextInput(style=Pack(flex=1))
         transaction_date_box.add(self.transaction_date_input)
 
-        self.transaction_amount_input = toga.NumberInput(step=0.01, style=Pack(width=200))
+        self.transaction_amount_input = toga.NumberInput(step=0.01, style=Pack(flex=1))
         transaction_amount_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_amount_box.add(toga.Label("Amount:"))
+        transaction_amount_box.add(toga.Label("Amount:", style=Pack(flex=1)))
         transaction_amount_box.add(self.transaction_amount_input)
 
         self.transaction_merchant_input = toga.TextInput(
-            placeholder="Merchant", style=Pack(width=200)
+            placeholder="Merchant", style=Pack(flex=1)
         )
         transaction_merchant_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_merchant_box.add(toga.Label("Merchant:"))
+        transaction_merchant_box.add(toga.Label("Merchant:", style=Pack(flex=1)))
         transaction_merchant_box.add(self.transaction_merchant_input)
 
         transaction_type_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_type_box.add(toga.Label("Type:"))
+        transaction_type_box.add(toga.Label("Type:", style=Pack(flex=1)))
         self.transaction_type_selection = toga.Selection(
             items=[
                 {"name": "Debit"},
@@ -359,6 +359,7 @@ class SQLTest(toga.App):
                 {"name": "Transfer"},
             ],
             accessor="name",
+            style=Pack(flex=1)
         )
         transaction_type_box.add(self.transaction_type_selection)
 
@@ -369,36 +370,29 @@ class SQLTest(toga.App):
             account_list_options.append(data)
 
         self.transaction_account_selection = toga.Selection(
-            items=account_list_options, accessor="name"
+            items=account_list_options, accessor="name", style=Pack(flex=1)
         )
 
         transaction_account_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_account_box.add(toga.Label("Account:"))
+        transaction_account_box.add(toga.Label("Account:", style=Pack(flex=1)))
         transaction_account_box.add(self.transaction_account_selection)
 
-        self.transaction_merchant_input = toga.TextInput(
-            placeholder="Merchant Name", style=Pack(width=200)
-        )
-        transaction_merchant_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_merchant_box.add(toga.Label("Merchant:"))
-        transaction_merchant_box.add(self.transaction_merchant_input)
-
         self.transaction_description_input = toga.TextInput(
-            placeholder="Description", style=Pack(width=200)
+            placeholder="Description", style=Pack(flex=1)
         )
         transaction_description_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_description_box.add(toga.Label("Description:"))
+        transaction_description_box.add(toga.Label("Description:", style=Pack(flex=1)))
         transaction_description_box.add(self.transaction_description_input)
 
         self.transaction_notes_input = toga.TextInput(
-            placeholder="Notes", style=Pack(width=200)
+            placeholder="Notes", style=Pack(flex=1)
         )
         transaction_notes_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        transaction_notes_box.add(toga.Label("Notes:"))
+        transaction_notes_box.add(toga.Label("Notes:", style=Pack(flex=1)))
         transaction_notes_box.add(self.transaction_notes_input)
 
         self.transaction_category_input = toga.TextInput(
-            placeholder="Category", style=Pack(width=200)
+            placeholder="Category", style=Pack(flex=1)
         )
         transaction_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
 
@@ -406,7 +400,6 @@ class SQLTest(toga.App):
         categories_res = cur.execute(
             "SELECT id, name FROM budget_categories ORDER BY Name"
         )
-        rows = []
         self.budget_category_list = categories_res.fetchall()
 
         self.get_spending_category_list()
@@ -422,25 +415,22 @@ class SQLTest(toga.App):
         self.spending_list_options = ListSource(accessors=["name", "id"], data=[{"name": "None", "id": 0}])
 
         self.transaction_budget_selection = toga.Selection(
-            items=budget_list_options, accessor="name", on_change=self.update_available_spending_categories_callback
+            items=budget_list_options, accessor="name", on_change=self.update_available_spending_categories_callback, style=Pack(flex=1)
         )
 
-        transaction_category_box.add(toga.Label("Budget Category:"))
+        transaction_category_box.add(toga.Label("Budget Category:", style=Pack(flex=1)))
         transaction_category_box.add(self.transaction_budget_selection)
-
-        # self.transaction_sub_category_input = toga.TextInput(placeholder="Sub-Category", style=Pack(width=200))
-        # transaction_sub_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        # transaction_sub_category_box.add(toga.Label("Sub-Category:"))
-        # transaction_sub_category_box.add(self.transaction_sub_category_input)
+    
+        transaction_spending_category_box = toga.Box(style=Pack(direction=ROW, padding=5))
 
         self.transaction_spending_selection = toga.Selection(
-            items=self.spending_list_options, accessor="name"
+            items=self.spending_list_options, accessor="name", style=Pack(flex=1)
         )
 
         self.update_available_spending_categories() #Populate initial spending category list based on initial budget category
 
-        transaction_category_box.add(toga.Label("Spending Category:"))
-        transaction_category_box.add(self.transaction_spending_selection)
+        transaction_spending_category_box.add(toga.Label("Spending Category:", style=Pack(flex=1)))
+        transaction_spending_category_box.add(self.transaction_spending_selection)
 
         transaction_box.add(
             transaction_date_box,
@@ -452,6 +442,7 @@ class SQLTest(toga.App):
             transaction_description_box,
             transaction_notes_box,
             transaction_category_box,
+            transaction_spending_category_box
         )
 
         add_transaction_button = toga.Button(

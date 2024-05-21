@@ -323,7 +323,7 @@ class SQLTest(toga.App):
             if row[2] and row[2] == self.transaction_budget_selection.value.budget_category_id:
                 data = {"name": row[1], "id": row[0]}
                 print(f"spending category: {data}")
-                spending_list_options.append(row[1])
+                spending_list_options.append(data)
         print(f"Spending list options is now {spending_list_options}")
         self.transaction_spending_selection.items = spending_list_options
 #        self.transaction_spending_selection.items = [{"name": self.transaction_budget_selection.value.name, "id": 42}]
@@ -456,14 +456,14 @@ class SQLTest(toga.App):
     def add_transaction_callback(self, widget):
         print("Adding transaction:")
         trans_cur = self.con.cursor()
-        sql_statement = f"INSERT INTO transactions (date, amount, account_id, merchant, description, notes, budget_category_id, spending_category_id) values (?, ?, ?, ?, ?, ?, ?, ?)"
+        sql_statement = f"INSERT INTO transactions (date, transaction_type, amount, account_id, merchant, description, notes, budget_category_id, spending_category_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
         transaction_datetime = time.mktime(
             datetime.datetime.strptime(
                 self.transaction_date_input.value, "%m/%d/%Y"
             ).timetuple()
         )
-
+        print(f"transaction type: {self.transaction_type_selection.value}")
         print(
             f"Running {sql_statement} with values {transaction_datetime} and {int(self.transaction_amount_input.value)}"
         )
@@ -471,6 +471,7 @@ class SQLTest(toga.App):
             sql_statement,
             (
                 transaction_datetime,
+                self.transaction_type_selection.value.name,
                 int(self.transaction_amount_input.value),
                 int(self.transaction_account_selection.value.account_id),
                 self.transaction_merchant_input.value,
@@ -602,7 +603,7 @@ CREATE TABLE transactions (
 	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	amount INTEGER NOT NULL,
 	date INTEGER NOT NULL,
-	transaction_type text DEFAULT ('debit') NOT NULL,
+	transaction_type text DEFAULT ('Debit') NOT NULL,
     account_id INTEGER NOT NULL,
     merchant TEXT,
     description TEXT,
@@ -618,7 +619,6 @@ INSERT INTO accounts (name,account_type) VALUES
 	 ('Savings','Savings');
                     """
         )
-
         transaction_datetime = time.mktime(
             datetime.datetime.strptime("2024-04-01", "%Y-%m-%d").timetuple()
         )

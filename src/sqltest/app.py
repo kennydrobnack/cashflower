@@ -359,10 +359,13 @@ class SQLTest(toga.App):
                 {"name": "Transfer"},
             ],
             accessor="name",
-            style=Pack(flex=1)
+            style=Pack(flex=1),
+            on_change=self.transaction_type_change_callback
         )
         transaction_type_box.add(self.transaction_type_selection)
 
+        self.transaction_transfer_account_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        
         account_list_options = ListSource(accessors=["name", "account_id"], data=[])
 
         for row in self.accounts_list:
@@ -442,7 +445,8 @@ class SQLTest(toga.App):
             transaction_description_box,
             transaction_notes_box,
             transaction_category_box,
-            transaction_spending_category_box
+            transaction_spending_category_box,
+            self.transaction_transfer_account_box
         )
 
         add_transaction_button = toga.Button(
@@ -453,10 +457,30 @@ class SQLTest(toga.App):
         transaction_box.add(add_transaction_button)
         self.main_window.content = transaction_box
 
+
+    def transaction_type_change_callback(self, widget):
+        # TODO: Show/Hide this as needed.
+        #if self.transaction_type_selection.value.name == 'transfer':
+            account_list_options = ListSource(accessors=["name", "account_id"], data=[{"name": "None", "account_id": None}])
+
+            for row in self.accounts_list:
+                data = {"name": row[1], "account_id": row[0]}
+                account_list_options.append(data)
+
+            self.transfer_account_selection = toga.Selection(
+                items=account_list_options, accessor="name", style=Pack(flex=1)
+            )
+
+            self.transaction_transfer_account_box.add(toga.Label("Account:", style=Pack(flex=1)))
+            self.transaction_transfer_account_box.add(self.transfer_account_selection)
+        #else:
+        #    self.transaction_transfer_account_box = None
+
+
     def add_transaction_callback(self, widget):
         print("Adding transaction:")
         trans_cur = self.con.cursor()
-        sql_statement = f"INSERT INTO transactions (date, transaction_type, amount, account_id, merchant, description, notes, budget_category_id, spending_category_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        sql_statement = f"INSERT INTO transactions (date, transaction_type, amount, account_id, merchant, description, notes, budget_category_id, spending_category_id, transfer_account_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
         transaction_datetime = time.mktime(
             datetime.datetime.strptime(
@@ -479,6 +503,7 @@ class SQLTest(toga.App):
                 self.transaction_notes_input.value,
                 self.transaction_budget_selection.value.budget_category_id,
                 self.transaction_spending_selection.value.id,
+                self.transfer_account_selection.value.account_id
             ),
         )
         self.con.commit()
@@ -609,7 +634,9 @@ CREATE TABLE transactions (
     description TEXT,
     notes TEXT,
     budget_category_id INTEGER,
-    spending_category_id INTEGER);
+    spending_category_id INTEGER,
+    transfer_account_id INTEGER
+    );
                           """
         )
         cur.execute(

@@ -506,6 +506,23 @@ class SQLTest(toga.App):
                 self.transfer_account_selection.value.account_id
             ),
         )
+        if self.transaction_type_selection.value.name == 'Transfer':
+            print("Current transaction is a transfer. Creating other side of transfer")
+            trans_cur.execute(
+                sql_statement,
+                (
+                    transaction_datetime,
+                    self.transaction_type_selection.value.name,
+                    int(self.transaction_amount_input.value),
+                    int(self.transfer_account_selection.value.account_id),
+                    self.transaction_merchant_input.value,
+                    self.transaction_description_input.value,
+                    self.transaction_notes_input.value,
+                    self.transaction_budget_selection.value.budget_category_id,
+                    self.transaction_spending_selection.value.id,
+                    self.transaction_account_selection.value.account_id
+                ),
+            )
         self.con.commit()
 
     def build_desktop_account_list(self):
@@ -532,6 +549,7 @@ class SQLTest(toga.App):
 
     def build_desktop_transaction_list(self):
         trans_cur = self.con.cursor()
+        #TODO: Update to include transactions that are transfers or don't have categories set.
         trans_res = trans_cur.execute(
             "SELECT t.id, amount, date(date, 'unixepoch') as date, account_id, merchant, description, notes, b.name, s.name FROM transactions t, budget_categories b, spending_categories s where t.budget_category_id = b.id and t.spending_category_id = s.id ORDER BY date"
         )

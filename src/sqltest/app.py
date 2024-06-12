@@ -491,6 +491,9 @@ class SQLTest(toga.App):
         print(
             f"Running {sql_statement} with values {transaction_datetime} and {int(self.transaction_amount_input.value)}"
         )
+        transfer_account_id = None
+        if self.transaction_type_selection.value.name == 'Transfer':
+            transfer_account_id = self.transfer_account_selection.value.account_id
         trans_cur.execute(
             sql_statement,
             (
@@ -503,7 +506,7 @@ class SQLTest(toga.App):
                 self.transaction_notes_input.value,
                 self.transaction_budget_selection.value.budget_category_id,
                 self.transaction_spending_selection.value.id,
-                self.transfer_account_selection.value.account_id
+                transfer_account_id
             ),
         )
         if self.transaction_type_selection.value.name == 'Transfer':
@@ -513,17 +516,19 @@ class SQLTest(toga.App):
                 (
                     transaction_datetime,
                     self.transaction_type_selection.value.name,
-                    int(self.transaction_amount_input.value),
-                    int(self.transfer_account_selection.value.account_id),
+                    -int(self.transaction_amount_input.value),
+                    transfer_account_id,
                     self.transaction_merchant_input.value,
                     self.transaction_description_input.value,
                     self.transaction_notes_input.value,
                     self.transaction_budget_selection.value.budget_category_id,
                     self.transaction_spending_selection.value.id,
-                    self.transaction_account_selection.value.account_id
+                    int(self.transaction_account_selection.value.account_id)
                 ),
             )
+            print("Other side of transfer created")
         self.con.commit()
+
 
     def build_desktop_account_list(self):
         cur = self.con.cursor()
@@ -630,7 +635,7 @@ CREATE TABLE spending_categories(
             """
 INSERT INTO budget_categories (name) VALUES
                     ('System Category')
-                    ,('Unknown Budget Category');
+                    ,('Unknown Budget Category')
                     """
         )
         cur.execute(

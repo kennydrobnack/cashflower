@@ -94,6 +94,12 @@ class SQLTest(toga.App):
             tooltip="Accounts",
             icon=toga.Icon.DEFAULT_ICON,
         )
+        budgets_cmd = toga.Command(
+            self.show_budgets_window,
+            "Budgets",
+            tooltip="Budgets",
+            icon=toga.Icon.DEFAULT_ICON,
+        )
         categories_cmd = toga.Command(
             self.show_categories_window,
             "Categories",
@@ -113,7 +119,7 @@ class SQLTest(toga.App):
             icon=toga.Icon.DEFAULT_ICON,
         )
         self.main_window.toolbar.add(
-            main_window_cmd, accounts_cmd, categories_cmd, transactions_cmd
+            main_window_cmd, accounts_cmd, budgets_cmd, categories_cmd, transactions_cmd
         )
 
     def show_main_window(self):
@@ -203,6 +209,16 @@ class SQLTest(toga.App):
         )
         add_account_box.add(add_account_button)
         self.main_window.content = add_account_box
+
+    def show_budgets_window(self, widget):
+        budgets_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
+        budgets_box.add(toga.Label("Fund Budgets:"))
+        self.get_budget_category_list()
+
+        for row in self.budget_category_list:
+            budgets_box.add(toga.Label(row[1]))
+        
+        self.main_window.content = budgets_box
 
     def add_account_to_db(self):
         account_cur = self.con.cursor()

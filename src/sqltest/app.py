@@ -214,11 +214,59 @@ class SQLTest(toga.App):
         budgets_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
         budgets_box.add(toga.Label("Fund Budgets:"))
         self.get_budget_category_list()
+        self.budget_date_inputs = []
+        self.budget_amount_inputs = []
 
+        row_number = 0
         for row in self.budget_category_list:
             budgets_box.add(toga.Label(row[1]))
+            
+            budget_date_box = toga.Box(style=Pack(direction=ROW, padding=5))
+            budget_date_box.add(toga.Label("Date:", style=Pack(flex=1)))
+            self.budget_date_inputs.append(toga.TextInput(style=Pack(flex=1)))
+            budget_date_box.add(self.budget_date_inputs[row_number])
+
+            self.budget_amount_inputs.append(toga.NumberInput(step=0.01, style=Pack(flex=1)))
+            budget_amount_box = toga.Box(style=Pack(direction=ROW, padding=5))
+            budget_amount_box.add(toga.Label("Amount:", style=Pack(flex=1)))
+            budget_amount_box.add(self.budget_amount_inputs[row_number])
+
+            budgets_box.add(budget_date_box, budget_amount_box)
+            row_number = row_number+1
+        
+        update_budget_button = toga.Button(
+            "Update Budget", on_press=self.update_budget_callback, style=Pack(width=200)
+        )
+        budgets_box.add(update_budget_button)
         
         self.main_window.content = budgets_box
+
+
+    def update_budget_callback(self, widget):
+        print("Updating budget categories:")
+
+        #TODO: make this work with multiple values to update and save the data
+        row_number = 0
+        for row in self.budget_category_list:
+            print(f'update for {row}: {self.budget_date_inputs[row_number].value} {self.budget_amount_inputs[row_number].value}')
+        #spending_categories_cur = self.con.cursor()
+        #sql_statement = (
+        #    "INSERT INTO spending_categories (name, parent_category_id) values (?, ?)"
+        #)
+        #category_name = self.spending_category_name_input.value
+        #parent_category_id = self.parent_budget_category_selection.value.id
+        #print(
+        #    f"Running SQL statement {sql_statement} with value {category_name} and {parent_category_id}"
+        #)
+        # TODO: get this using proper id's. If you only pass in one arg and it's a string, Python/sqlite interpret this as a list of chars.
+        # wrapping the variable in [] fixes this.
+        # See: https://techoverflow.net/2019/10/14/how-to-fix-sqlite3-python-incorrect-number-of-bindings-supplied-the-current-statement-uses-1-supplied/
+        #spending_categories_cur.execute(
+        #    sql_statement, ([category_name, parent_category_id])
+        #)
+        #self.con.commit()
+        self.show_budgets_window(widget)
+
 
     def add_account_to_db(self):
         account_cur = self.con.cursor()
@@ -636,6 +684,15 @@ CREATE TABLE accounts (
 CREATE TABLE budget_categories(
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name TEXT);
+                    """
+        )
+        cur.execute(
+            """
+CREATE TABLE budget_transactions(
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    amount INTEGER NOT NULL,
+	date INTEGER NOT NULL,
+    notes TEXT);
                     """
         )
         cur.execute(

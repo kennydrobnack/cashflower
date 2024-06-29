@@ -253,7 +253,6 @@ class SQLTest(toga.App):
     def update_budget_callback(self, widget):
         print("Updating budget categories:")
 
-        #TODO: make this work with multiple values to update and save the data
         row_number = -1
         sql_statement = 'insert into budget_transactions (amount, date) values (?, ?)'
 

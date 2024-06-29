@@ -219,6 +219,7 @@ class SQLTest(toga.App):
 
         row_number = 0
         for row in self.budget_category_list:
+            print(f'Adding row number {row_number}')
             budgets_box.add(toga.Label(row[1]))
             
             budget_date_box = toga.Box(style=Pack(direction=ROW, padding=5))
@@ -246,9 +247,22 @@ class SQLTest(toga.App):
         print("Updating budget categories:")
 
         #TODO: make this work with multiple values to update and save the data
-        row_number = 0
+        row_number = -1
+        sql_statement = 'insert into budget_transactions (amount, date) values (?, ?)'
+
+        budget_update_cur = self.con.cursor()
         for row in self.budget_category_list:
-            print(f'update for {row}: {self.budget_date_inputs[row_number].value} {self.budget_amount_inputs[row_number].value}')
+            row_number = row_number + 1
+            print(f'update for {row} {row_number}: {self.budget_date_inputs[row_number].value} {self.budget_amount_inputs[row_number].value}')
+            if self.budget_date_inputs[row_number].value and self.budget_amount_inputs[row_number].value:
+                print('Updating budget...')
+                transaction_datetime = time.mktime(
+                    datetime.datetime.strptime(
+                        self.budget_date_inputs[row_number].value, "%m/%d/%Y").timetuple())
+                transaction_amount = int(self.budget_amount_inputs[row_number].value)
+                budget_update_cur.execute(sql_statement, [transaction_datetime, transaction_amount])
+        self.con.commit()
+
         #spending_categories_cur = self.con.cursor()
         #sql_statement = (
         #    "INSERT INTO spending_categories (name, parent_category_id) values (?, ?)"

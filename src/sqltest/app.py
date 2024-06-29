@@ -13,6 +13,8 @@ import toga
 from toga.sources import ListSource
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
+from toga.constants import CENTER, COLUMN, HIDDEN, ROW, VISIBLE
+
 
 import sqlite3
 import urllib.request
@@ -216,6 +218,7 @@ class SQLTest(toga.App):
         self.get_budget_category_list()
         self.budget_date_inputs = []
         self.budget_amount_inputs = []
+        self.budget_id_inputs = []
 
         row_number = 0
         for row in self.budget_category_list:
@@ -231,6 +234,10 @@ class SQLTest(toga.App):
             budget_amount_box = toga.Box(style=Pack(direction=ROW, padding=5))
             budget_amount_box.add(toga.Label("Amount:", style=Pack(flex=1)))
             budget_amount_box.add(self.budget_amount_inputs[row_number])
+
+            self.budget_id_inputs.append(toga.NumberInput(step=1, style=Pack(visibility=HIDDEN, width=0, height=0)))
+            self.budget_id_inputs[row_number].value = row[0]
+            budgets_box.add(self.budget_id_inputs[row_number])
 
             budgets_box.add(budget_date_box, budget_amount_box)
             row_number = row_number+1
@@ -255,7 +262,7 @@ class SQLTest(toga.App):
             row_number = row_number + 1
             print(f'update for {row} {row_number}: {self.budget_date_inputs[row_number].value} {self.budget_amount_inputs[row_number].value}')
             if self.budget_date_inputs[row_number].value and self.budget_amount_inputs[row_number].value:
-                print('Updating budget...')
+                print(f'Updating budget... {self.budget_id_inputs[row_number].value}')
                 transaction_datetime = time.mktime(
                     datetime.datetime.strptime(
                         self.budget_date_inputs[row_number].value, "%m/%d/%Y").timetuple())
